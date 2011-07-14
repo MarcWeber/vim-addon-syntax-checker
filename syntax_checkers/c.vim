@@ -1,3 +1,5 @@
+" see plugin/syntastic.vim. Eventually drop, move or refactor
+
 "============================================================================
 "File:        c.vim
 "Description: Syntax checking plugin for syntastic.vim
