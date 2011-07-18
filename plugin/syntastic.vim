@@ -89,6 +89,17 @@ let tmp['js_jsl'] = {
     \ , 'prio': 1
     \ }
 
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+" we cannot set RUBYOPT on windows like that
+" Marc: Why does it hurt having it set?
+let s:cfg['ruby_check'] = get(s:c, 'ruby_check', has('win32') || has('win64') ?  'ruby -W1 -T1 -c %' : 'RUBYOPT= ruby -W1 -c %')
+let tmp['ruby'] = {
+    \   'applies' : '&ft == "rb"'
+    \ , 'cmd' : {'cmd': s:cfg.ruby_check, 'efm':  '%-GSyntax OK,%E%f:%l: syntax error\, %m,%Z%p^,%W%f:%l: warning: %m,%Z%p^,%W%f:%l: %m,%-C%.%#' }
+    \ , 'prerequisites': 'executable("csslint")'
+    \ }
+
 let tmp['eruby'] = {
     \   'applies' : '&ft == "eruby"'
     \ , 'cmd' : function('syntastic#Eruby')
@@ -100,6 +111,14 @@ let tmp['haml'] = {
     \ , 'cmd' : function('syntastic#Haml')
     \ , 'prerequisites': 'executable("haml")'
     \ }
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+let tmp['sass'] = {
+    \   'applies' : '&ft == "sass"'
+    \ , 'cmd' : function('syntastic#Sass')
+    \ , 'prerequisites': 'executable("haml")'
+    \ }
+
 
 let tmp['coffee'] = {
     \   'applies' : '&ft == "coffee"'
@@ -121,6 +140,95 @@ let tmp['go'] = {
     \ , 'prerequisites': 'executable("6g")'
     \ }
 
+" by Ory Band <oryband at gmail dot com>
+let tmp['css'] = {
+    \   'applies' : '&ft == "css"'
+    \ , 'cmd' : {'cmd': 'csslint %', 'efm':  '%+Gcsslint:\ There%.%#,%A%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m\ at\ line%.%#,%A%>%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m,%-G%.%#' }
+    \ , 'prerequisites': 'executable("csslint")'
+    \ }
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+let tmp['cucumber'] = {
+    \   'applies' : '&ft == "cucumber"'
+    \ , 'cmd' : {'cmd': 'cucumber --dry-run --quiet --strict --format pretty %', 'efm':  '%f:%l:%c:%m,%W      %.%# (%m),%-Z%f:%l:%.%#,%-G%.%#' }
+    \ , 'prerequisites': 'executable("cucumber")'
+    \ }
+
+"by      Hannes Schulz <schulz at ais dot uni-bonn dot de>
+" shouldn't the default just be nvcc?
+let s:cfg['nvcc'] = get(s:cfg,'nvcc', '/usr/loca/cuda/bin/nvcc')
+let tmp['cudo'] = {
+    \   'applies' : '&ft == "cuda"'
+    \ , 'cmd' : function('syntastic#CUDA')
+    \ , 'prerequisites': 'executable(g:syntastic.nvcc)'
+    \ }
+
+"by Julien Blanchard <julien at sideburns dot eu>
+let tmp['less'] = {
+    \   'applies' : '&ft == "less"'
+    \ , 'cmd' : {'cmd': 'lessc % /dev/null', 'efm':  'Syntax %trror on line %l,! Syntax %trror: on line %l: %m,%-G%.%#' }
+    \ , 'prerequisites': 'executable("lessc")'
+    \ }
+
+"by  Gregor Uhlenheuer <kongo2002 at gmail dot com>
+let tmp['lua'] = {
+    \   'applies' : '&ft == "lua"'
+    \ , 'cmd' : {'cmd': 'luac -p %', 'efm':  'luac: %#%f:%l: %m' }
+    \ , 'prerequisites': 'executable("luac")'
+    \ }
+
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+let tmp['docbk'] = {
+    \   'applies' : '&ft == "css"'
+    \ , 'cmd' : {'cmd': 'xmllint --xinclude --noout --postvalid %', 'efm':  '%E%f:%l: parser error : %m,%W%f:%l: parser warning : %m,%E%f:%l:%.%# validity error : %m,%W%f:%l:%.%# validity warning : %m,%-Z%p^,%-C%.%#,%-G%.%#' }
+    \ , 'prerequisites': 'executable("xmllint")'
+    \ }
+
+"by  Jason Graham <jason at the-graham dot com>
+let tmp['matlab'] = {
+    \   'applies' : '&ft == "ml"'
+    \ , 'cmd' : {'cmd': 'mlint -id $* %', 'efm':  'L %l (C %c): %*[a-zA-Z0-9]: %m,L %l (C %c-%*[0-9]): %*[a-zA-Z0-9]: %m' }
+    \ , 'prerequisites': 'executable("mlint")'
+    \ }
+
+"by  Eivind Uggedal <eivind at uggedal dot com>
+let tmp['puppet'] = {
+    \   'applies' : '&ft == "css"'
+    \ , 'cmd' : {'cmd': 'puppet --color=false --parseonly %', 'efm':  'err: Could not parse for environment %*[a-z]: %m at %f:%l' }
+    \ , 'prerequisites': 'executable("puppet")'
+    \ }
+
+" TODO:, function('syntastic#SyntaxCheckers_python_Term')
+let tmp['python'] = {
+    \   'applies' : '&ft == "css"'
+    \ , 'cmd' : {'cmd': 'pyflakes %', 'efm':  '%E%f:%l: could not compile,%-Z%p^,%W%f:%l: %m,%-G%.%#' }
+    \ , 'prerequisites': 'executable("pyflakes")'
+    \ }
+
+" by  Martin Grenfell <martin.grenfell at gmail dot com>
+let tmp['latex'] = {
+    \   'applies' : '&ft == "latex"'
+    \ , 'cmd' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
+    \ , 'prerequisites': 'executable("lacheck")'
+    \ }
+
+" let tmp['xhttm'] =  join with html? TODO
+
+function! SyntaxCheckers_tex_GetLocList()
+    let makeprg = 'lacheck '.shellescape(expand('%'))
+    let errorformat =  '%-G** %f:,%E"%f"\, line %l: %m'
+    return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
+endfunction
+
+"by Eric Thomas <eric.l.m.thomas at gmail dot com>
+" does this do a syntax check only ? No, it runs the code!
+" Thus this should go into vim-addon-actions
+"let tmp['tclsh'] = {
+"    \   'applies' : '&ft == "tcl"'
+"    \ , 'cmd' : {'cmd': 'ctlsh %', 'efm':  '%f:%l:%m' }
+"    \ , 'prerequisites': 'executable("csslint")'
+"    \ }
 
 " haskell, hs, ghc; use vim-addon-actions which provides background
 " compilation process, or try scion
@@ -132,18 +240,6 @@ let tmp['go'] = {
 " vim-addon-actions ..
 
 " scala: get github.com/MarcWeber/ensime or use a full blown IDE :(
-
-"grep out the '<table> lacks "summary" attribute' since it is almost
-"always present and almost always useless
-let encopt = s:TidyEncOptByFenc()
-let makeprg="tidy ".encopt." --new-blocklevel-tags 'section, article, aside, hgroup, header, footer, nav, figure, figcaption' --new-inline-tags 'video, audio, embed, mark, progress, meter, time, ruby, rt, rp, canvas, command, details, datalist' --new-empty-tags 'wbr, keygen' -e ".shellescape(expand('%'))." 2>&1 \\| grep -v '\<table\> lacks \"summary\" attribute' \\| grep -v 'not approved by W3C'"
-let errorformat='%Wline %l column %c - Warning: %m,%Eline %l column %c - Error: %m,%-G%.%#,%-G%.%#'
-let loclist = SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-
-"the file name isnt in the output so stick in the buf num manually
-for i in loclist
-let i['bufnr'] = bufnr("")
-endfor
 
 
 " merge configuration settings keeping user's predefined keys:
