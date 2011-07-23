@@ -75,12 +75,14 @@ fun! syntastic#HTML(list_type) dict abort
    \ ." --new-inline-tags 'video, audio, embed, mark, progress, meter, time, ruby, rt, rp, canvas, command, details, datalist'"
    \ ." --new-empty-tags 'wbr, keygen' -e ".shellescape(expand('%'))." 2>&1"
 
-  let l = split(system(cmd),"\n")
-  for i in range(0, len(l)-1)
+  let list = []
+  let r = get(self, "ignore_regex", "")
+  for l in split(system(cmd),"\n")
     " if  l =~ 'not approved by W3C' | drop line | ..
-    let l[i] = substitute(l[i], '^\line \(\d\+\) column \(\d\+\) - \(.*\)', expand('%') . ':\1:\2:\3','')
+    if r != "" && l =~ r | continue | endif
+    call add(list,  substitute(l, '^\line \(\d\+\) column \(\d\+\) - \(.*\)', expand('%') . ':\1:\2:\3',''))
   endfor
-  call writefile(l, s:c.tmpfile)
+  call writefile(list, s:c.tmpfile)
   call SyntasticCheckSimple('', '%W%f:%l:%c:Warning: %m', a:list_type)
 endfun
 

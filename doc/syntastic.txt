@@ -13,20 +13,17 @@ customizations:
 
 Put into your .vimrc:
 
-    let g:syntastic = {file_types : {}}
-    " set this if you prefer activating the checkers manually
-    " let g:syntastic['auto_setup'] = 0 
-    let g:syntastic.file_types['new_type'] = Examples see plugin/syntastic.vim
-    let g:syntastic.file_types['xml'] = 'disabled'
+  call syntastic_setup#Setup()
+  " set this if you prefer activating the checkers manually
+  " let g:syntastic['auto_setup'] = 0 
+  let g:syntastic.file_types['new_type'] = Examples see plugin/syntastic.vim
+  let g:syntastic.file_types['xml'] = 'disabled'
 
-If you dislike standard behaviour you can define the post hook and patch the
-dict:
+  " overwrite error format
+  let g:syntastic.file_types['js'].cmd.efm = "overwrite error fromat here"
 
-  fun SyntasticPatch()
-    let g:syntastic.file_types['js'].cmd.efm = "overwrite error fromat here"
-  endfun
-  let g:syntastic.post_process = function('SyntasticPatch')
-
+  " for html tidy set ignore regex
+  let g:syntastic.file_types.html.ignore_regex = 'lacks "alt" attribute\|proprietary attribute'
 
 Special notes:
   Some checkers such as xml / xhtml work best if you have local copies of the
