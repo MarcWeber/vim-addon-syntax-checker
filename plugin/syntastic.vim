@@ -290,7 +290,7 @@ endf
 
 fun! SyntasticCheckSimple(cmd, efm, list_type)
   " echo "syntastic, checking .."
-  exec 'let efm="'. escape(a:efm, '"').'"'
+  exec 'set efm='. escape(a:efm, ' \,|"')
   " don't use make. scrolling lines are annoying!
   let g:syntastic.last_cmd = a:cmd
   call system(a:cmd.' &>'.s:c.tmpfile)
@@ -328,7 +328,7 @@ fun! SyntasticCheck()
   " colse open loc/ error list if there are errors / no errors
   exec list_type.(any ? 'open' : 'close')
 
-  exec 'let efm="'.escape(e, '"').'"'
+  exec 'set efm='.escape(e, ' \,|"')
 endf
 
 fun! SyntasticSetupBufWriteChecker(setup_au)
