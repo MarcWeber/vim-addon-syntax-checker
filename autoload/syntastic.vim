@@ -1,11 +1,20 @@
+" vam#DefineAndBind('s:l','g:syntastic','{}')
+if !exists('g:syntastic') | let g:syntastic = {} | endif | let s:c = g:syntastic
+
 " utils {{{1
 
-function! syntastic#ErrorBalloonExpr()
+fun! syntastic#SetLocList(a)
+  call setloclist(winbufnr('%'), a:a)
+endfun
+
+" TODO currently unused?
+fun! syntastic#ErrorBalloonExpr()
     if !exists('b:syntastic_balloons') | return '' | endif
     return get(b:syntastic_balloons, v:beval_lnum, '')
-endfunction
+endfun
 
-function! syntastic#HighlightErrors(errors, termfunc)
+" TODO currently unused?, vim-addon-signs should be used
+fun! syntastic#HighlightErrors(errors, termfunc)
     call clearmatches()
     for item in a:errors
         if item['col']
@@ -20,11 +29,31 @@ function! syntastic#HighlightErrors(errors, termfunc)
             endif
         endif
     endfor
-endfunction
+endfun
 
 " checker implementations {{{1
 
-function syntastic#HTML() dict abort
+fun! syntastic#PythonSimple(list_type)
+  " must use function because % must be quoted the python, not the shell way:
+  if !exists('s:c.py_tmp') | let s:c.py_tmp = tempname() | endif
+  call writefile( [ 'import py_compile,sys'
+                \ , 'sys.stderr=sys.stdout'
+                \ , 'try:'
+                \ , '  py_compile.compile(file="'.expand('%').'", doraise=True)'
+                \ , 'except Exception, e:'
+                \ , '  # import pdb; pdb.set_trace()'
+                \ , '  loc = e.exc_value[1]'
+                \ , '  print "%s:%s:%s:%s" % (loc[0], loc[1], loc[2], e.exc_value[0])'
+                \ ], s:c.py_tmp)
+
+  call SyntasticCheckSimple(
+    \ 'python '. shellescape(s:c.py_tmp)
+    \ , '%A  File "%f", line %l, %m'
+    \ , a:list_type
+    \ )
+endfun
+
+fun! syntastic#HTML() dict abort
   throw "TODO"
   " return get(tidy_opts, &fileencoding, '-utf8')
     "grep out the '<table> lacks "summary" attribute' since it is almost
@@ -41,18 +70,17 @@ function syntastic#HTML() dict abort
 
   return get(tidy_opts, &fileencoding, '-utf8')
   "
-endf
+endfun
 
-function syntastic#JS_JSL()
+fun! syntastic#JS_JSL()
   throw "TODO"
-
 "    'efm' : '%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G'
   let makeprg = "jsl" . jslconf . " -nologo -nofilelisting -nosummary -nocontext -process ".shellescape(expand('%'))
   let errorformat=''
   return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-endfunction
+endfun
 
-function syntastic#Eruby()
+fun! syntastic#Eruby()
   " TODO get rid of sed etc?
   throw "TODO"
     let makeprg='sed "s/<\%=/<\%/g" '. shellescape(expand("%")) . ' \| RUBYOPT= ruby -e "require \"erb\"; puts ERB.new(ARGF.read, nil, \"-\").src" \| RUBYOPT= ruby -c'
@@ -65,9 +93,9 @@ function syntastic#Eruby()
     endfor
 
     return loclist
-function
+endfun
 
-function syntastic#Haml()
+fun! syntastic#Haml()
   " extra function required?
   throw "TODO"
   let output = system("haml -c " . shellescape(expand("%")))
@@ -78,10 +106,10 @@ function syntastic#Haml()
     return [{'lnum' : line, 'text' : msg, 'bufnr': bufnr(""), 'type': 'E' }]
   endif
   return []
-endf
+endfun
 
 
-function syntastic#Sass()
+fun! syntastic#Sass()
   throw "TODO"
 
   "use compass imports if available
@@ -102,10 +130,10 @@ function syntastic#Sass()
   endfor
 
   return loclist
-endfunction
+endfun
 
 
-function syntastic#CUDA()
+fun! syntastic#CUDA()
   throw "TODO"
 
     let makeprg = g:syntastic_nvcc_binary.' --cuda -O0 -I . -Xcompiler -fsyntax-only '.shellescape(expand('%')).' -o /dev/null'
@@ -120,7 +148,7 @@ function syntastic#CUDA()
         endif
     endif
     return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-endfunction
+endfun
 
 
 
@@ -147,7 +175,7 @@ endfunction
 "         endif
 "     endif
 "     return result
-" endfunction
+" endfun
 " 
 " function! SyntaxCheckers_lua_GetLocList()
 " 
@@ -162,12 +190,12 @@ endfunction
 "     call syntastic#HighlightErrors(loclist, function("SyntaxCheckers_lua_Term"))
 " 
 "     return loclist
-" endfunction
+" endfun
 "
 "
 "
 
-function! syntastic#SyntaxCheckers_python_Term(i)
+fun! syntastic#SyntaxCheckers_python_Term(i)
   throw "TODO"
     if a:i['type'] ==# 'E'
         let a:i['text'] = "Syntax error"
@@ -181,10 +209,10 @@ function! syntastic#SyntaxCheckers_python_Term(i)
         return '\V'.term
     endif
     return ''
-endfunction
+endfun
 
 " xhtml 
-function syntastic#Tidy()
+fun! syntastic#Tidy()
   throw "TODO"
   " TODO: join this with html.vim DRY's sake?
     let tidy_opts = {
@@ -213,4 +241,5 @@ function syntastic#Tidy()
     endfor
 
     return loclist
-endfunction
+endfun
+

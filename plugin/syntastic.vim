@@ -51,7 +51,6 @@ let tmp = {}
 let tmp['php'] = {
      \   'applies' : '&ft == "php"'
      \ , 'check': {'cmd': 'php -l %', 'efm': '%-GNo syntax errors detected in%.%#,PHP Parse error: %#syntax %trror\, %m in %f on line %l,PHP Fatal %trror: %m in %f on line %l,%-GErrors parsing %.%#,%-G\s%#,Parse error: %#syntax %trror\, %m in %f on line %l,Fatal %trror: %m in %f on line %l' }
-     \ , 'cmd' : 'php -l %'
      \ }
 
 " HTML
@@ -84,7 +83,7 @@ let tmp['html'] = {
 " used by web apps) refetching the dts on each run - which made them collapse.
 let tmp['xml'] = {
     \   'applies' : '&ft =~ "xhtml\\|xml"'
-    \ , 'cmd' : {'cmd': 'xmllint --valid --loaddtd --noout --load-trace %', 'efm': ""}
+    \ , 'check' : {'cmd': 'xmllint --valid --loaddtd --noout --load-trace %', 'efm': ""}
     \ , 'prerequisites': 'executable("xmllint")'
     \ }
 
@@ -102,7 +101,7 @@ let tmp['js_jshint'] = {
 
 let tmp['js_jsl'] = {
     \   'applies' : '&ft == "js"'
-    \ , 'cmd' : function('syntastic#JS_JSL')
+    \ , 'check' : function('syntastic#JS_JSL')
     \ , 'prerequisites': 'executable("jsl")'
     \ , 'prio': 1
     \ }
@@ -114,61 +113,61 @@ let tmp['js_jsl'] = {
 let s:c['ruby_check'] = get(s:c, 'ruby_check', has('win32') || has('win64') ?  'ruby -W1 -T1 -c %' : 'RUBYOPT= ruby -W1 -c %')
 let tmp['ruby'] = {
     \   'applies' : '&ft == "rb"'
-    \ , 'cmd' : {'cmd': s:c.ruby_check, 'efm':  '%-GSyntax OK,%E%f:%l: syntax error\, %m,%Z%p^,%W%f:%l: warning: %m,%Z%p^,%W%f:%l: %m,%-C%.%#' }
+    \ , 'check' : {'cmd': s:c.ruby_check, 'efm':  '%-GSyntax OK,%E%f:%l: syntax error\, %m,%Z%p^,%W%f:%l: warning: %m,%Z%p^,%W%f:%l: %m,%-C%.%#' }
     \ , 'prerequisites': 'executable("csslint")'
     \ }
 
 let tmp['eruby'] = {
     \   'applies' : '&ft == "eruby"'
-    \ , 'cmd' : function('syntastic#Eruby')
+    \ , 'check' : function('syntastic#Eruby')
     \ , 'prerequisites': 'executable("cat") && executabel("sed") && executable("ruby")'
     \ }
 
 let tmp['haml'] = {
     \   'applies' : '&ft == "haml"'
-    \ , 'cmd' : function('syntastic#Haml')
+    \ , 'check' : function('syntastic#Haml')
     \ , 'prerequisites': 'executable("haml")'
     \ }
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
 let tmp['sass'] = {
     \   'applies' : '&ft == "sass"'
-    \ , 'cmd' : function('syntastic#Sass')
+    \ , 'check' : function('syntastic#Sass')
     \ , 'prerequisites': 'executable("haml")'
     \ }
 
 
 let tmp['coffee'] = {
     \   'applies' : '&ft == "coffee"'
-    \ , 'cmd' : {'cmd': 'coffee -c -l -o /tmp %', 'efm': '%EError: In %f\, Parse error on line %l: %m,%EError: In %f\, %m on line %l,%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G' }
+    \ , 'check' : {'cmd': 'coffee -c -l -o /tmp %', 'efm': '%EError: In %f\, Parse error on line %l: %m,%EError: In %f\, %m on line %l,%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G' }
     \ , 'prerequisites': 'executable("coffee")'
     \ }
 
 let s:c['perl_efm_program'] = get(s:c,'perl_efm_program', $VIMRUNTIME.'/tools/efm_perl.pl -c')
 let tmp['perl'] = {
     \   'applies' : '&ft == "perl"'
-    \ , 'cmd' : {'cmd': s:c['perl_efm_program'].' %', 'efm': '%f:%l:%m' }
+    \ , 'check' : {'cmd': s:c['perl_efm_program'].' %', 'efm': '%f:%l:%m' }
     \ , 'prerequisites': 'executable("perl")'
     \ }
 
 " Sam Nguyen <samxnguyen@gmail.com>
 let tmp['go'] = {
     \   'applies' : '&ft == "go"'
-    \ , 'cmd' : {'cmd': '6g -o /dev/null %', 'efm':  '%E%f:%l: %m'}
+    \ , 'check' : {'cmd': '6g -o /dev/null %', 'efm':  '%E%f:%l: %m'}
     \ , 'prerequisites': 'executable("6g")'
     \ }
 
 " by Ory Band <oryband at gmail dot com>
 let tmp['css'] = {
     \   'applies' : '&ft == "css"'
-    \ , 'cmd' : {'cmd': 'csslint %', 'efm':  '%+Gcsslint:\ There%.%#,%A%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m\ at\ line%.%#,%A%>%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m,%-G%.%#' }
+    \ , 'check' : {'cmd': 'csslint %', 'efm':  '%+Gcsslint:\ There%.%#,%A%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m\ at\ line%.%#,%A%>%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m,%-G%.%#' }
     \ , 'prerequisites': 'executable("csslint")'
     \ }
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
 let tmp['cucumber'] = {
     \   'applies' : '&ft == "cucumber"'
-    \ , 'cmd' : {'cmd': 'cucumber --dry-run --quiet --strict --format pretty %', 'efm':  '%f:%l:%c:%m,%W      %.%# (%m),%-Z%f:%l:%.%#,%-G%.%#' }
+    \ , 'check' : {'cmd': 'cucumber --dry-run --quiet --strict --format pretty %', 'efm':  '%f:%l:%c:%m,%W      %.%# (%m),%-Z%f:%l:%.%#,%-G%.%#' }
     \ , 'prerequisites': 'executable("cucumber")'
     \ }
 
@@ -177,21 +176,21 @@ let tmp['cucumber'] = {
 let s:c['nvcc'] = get(s:c,'nvcc', '/usr/loca/cuda/bin/nvcc')
 let tmp['cudo'] = {
     \   'applies' : '&ft == "cuda"'
-    \ , 'cmd' : function('syntastic#CUDA')
+    \ , 'check' : function('syntastic#CUDA')
     \ , 'prerequisites': 'executable(g:syntastic.nvcc)'
     \ }
 
 "by Julien Blanchard <julien at sideburns dot eu>
 let tmp['less'] = {
     \   'applies' : '&ft == "less"'
-    \ , 'cmd' : {'cmd': 'lessc % /dev/null', 'efm':  'Syntax %trror on line %l,! Syntax %trror: on line %l: %m,%-G%.%#' }
+    \ , 'check' : {'cmd': 'lessc % /dev/null', 'efm':  'Syntax %trror on line %l,! Syntax %trror: on line %l: %m,%-G%.%#' }
     \ , 'prerequisites': 'executable("lessc")'
     \ }
 
 "by  Gregor Uhlenheuer <kongo2002 at gmail dot com>
 let tmp['lua'] = {
     \   'applies' : '&ft == "lua"'
-    \ , 'cmd' : {'cmd': 'luac -p %', 'efm':  'luac: %#%f:%l: %m' }
+    \ , 'check' : {'cmd': 'luac -p %', 'efm':  'luac: %#%f:%l: %m' }
     \ , 'prerequisites': 'executable("luac")'
     \ }
 
@@ -199,35 +198,41 @@ let tmp['lua'] = {
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
 let tmp['docbk'] = {
     \   'applies' : '&ft == "css"'
-    \ , 'cmd' : {'cmd': 'xmllint --xinclude --noout --postvalid %', 'efm':  '%E%f:%l: parser error : %m,%W%f:%l: parser warning : %m,%E%f:%l:%.%# validity error : %m,%W%f:%l:%.%# validity warning : %m,%-Z%p^,%-C%.%#,%-G%.%#' }
+    \ , 'check' : {'cmd': 'xmllint --xinclude --noout --postvalid %', 'efm':  '%E%f:%l: parser error : %m,%W%f:%l: parser warning : %m,%E%f:%l:%.%# validity error : %m,%W%f:%l:%.%# validity warning : %m,%-Z%p^,%-C%.%#,%-G%.%#' }
     \ , 'prerequisites': 'executable("xmllint")'
     \ }
 
 "by  Jason Graham <jason at the-graham dot com>
 let tmp['matlab'] = {
     \   'applies' : '&ft == "ml"'
-    \ , 'cmd' : {'cmd': 'mlint -id $* %', 'efm':  'L %l (C %c): %*[a-zA-Z0-9]: %m,L %l (C %c-%*[0-9]): %*[a-zA-Z0-9]: %m' }
+    \ , 'check' : {'cmd': 'mlint -id $* %', 'efm':  'L %l (C %c): %*[a-zA-Z0-9]: %m,L %l (C %c-%*[0-9]): %*[a-zA-Z0-9]: %m' }
     \ , 'prerequisites': 'executable("mlint")'
     \ }
 
 "by  Eivind Uggedal <eivind at uggedal dot com>
 let tmp['puppet'] = {
     \   'applies' : '&ft == "css"'
-    \ , 'cmd' : {'cmd': 'puppet --color=false --parseonly %', 'efm':  'err: Could not parse for environment %*[a-z]: %m at %f:%l' }
+    \ , 'check' : {'cmd': 'puppet --color=false --parseonly %', 'efm':  'err: Could not parse for environment %*[a-z]: %m at %f:%l' }
     \ , 'prerequisites': 'executable("puppet")'
     \ }
 
 " TODO:, function('syntastic#SyntaxCheckers_python_Term')
 let tmp['python'] = {
-    \   'applies' : '&ft == "css"'
-    \ , 'cmd' : {'cmd': 'pyflakes %', 'efm':  '%E%f:%l: could not compile,%-Z%p^,%W%f:%l: %m,%-G%.%#' }
+    \   'applies' : '&ft == "python"'
+    \ , 'check' : {'cmd': 'pyflakes %', 'efm':  '%E%f:%l: could not compile,%-Z%p^,%W%f:%l: %m,%-G%.%#' }
     \ , 'prerequisites': 'executable("pyflakes")'
     \ }
+
+let tmp['python_simple'] = {
+      \  'applies' : '&ft == "python"'
+      \ , 'check' : function('syntastic#PythonSimple')
+      \ , 'prerequisites': 'has("python")'
+      \ }
 
 " by  Martin Grenfell <martin.grenfell at gmail dot com>
 let tmp['latex'] = {
     \   'applies' : '&ft == "latex"'
-    \ , 'cmd' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
+    \ , 'check' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
     \ , 'prerequisites': 'executable("lacheck")'
     \ }
 
@@ -244,7 +249,7 @@ endfunction
 " Thus this should go into vim-addon-actions
 "let tmp['tclsh'] = {
 "    \   'applies' : '&ft == "tcl"'
-"    \ , 'cmd' : {'cmd': 'ctlsh %', 'efm':  '%f:%l:%m' }
+"    \ , 'check' : {'cmd': 'ctlsh %', 'efm':  '%f:%l:%m' }
 "    \ , 'prerequisites': 'executable("csslint")'
 "    \ }
 
@@ -283,6 +288,15 @@ fun! SyntasticOptions(drop_prerequisites_missmatch)
   return r
 endf
 
+fun! SyntasticCheckSimple(cmd, efm, list_type)
+  " echo "syntastic, checking .."
+  exec 'let efm="'. escape(a:efm, '"').'"'
+  " don't use make. scrolling lines are annoying!
+  let g:syntastic.last_cmd = a:cmd
+  call system(a:cmd.' &>'.s:c.tmpfile)
+  silent! exec a:list_type.'file '.s:c.tmpfile
+endf
+
 " do the check
 fun! SyntasticCheck()
   if !exists('b:syntastic_checker')
@@ -295,19 +309,15 @@ fun! SyntasticCheck()
   let e=&efm
   if !exists('s:c.tmpfile') | let s:c.tmpfile = tempname() | endif
   
-  if type(d.cmd) == type({}) && has_key(d.cmd, 'cmd') && has_key(d.cmd, 'efm')
+  if type(d.check) == type({}) && has_key(d.check, 'cmd') && has_key(d.check, 'efm')
 
     " (1) make like checker
-    " echo "syntastic, checking .."
-    exec 'let efm="'. escape(d.cmd.efm, '"').'"'
-    " don't use make. scrolling lines are annoying!
-    call system(substitute(d.cmd.cmd,'%',shellescape(expand('%')),'%').' &>'.s:c.tmpfile)
-    silent! exec list_type.'file '.s:c.tmpfile
+    call SyntasticCheckSimple(substitute(d.check.cmd,'%',shellescape(expand('%')),'%'), d.check.efm, list_type)
 
-  elseif type(d.cmd) == 2
+  elseif type(d.check) == 2
 
     " (2) funcref must fill location /error list
-    call call(d.cmd, [list_type], d)
+    call call(d.check, [list_type], d)
 
   endif
 
