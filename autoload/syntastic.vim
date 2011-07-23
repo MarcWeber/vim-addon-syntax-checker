@@ -1,256 +1,368 @@
+
+"============================================================================
+"File:        syntastic.vim
+"Description: vim plugin for on the fly syntax checking
+"Maintainer:  Martin Grenfell <martin.grenfell at gmail dot com>
+"Rewrite:     Marc Weber <marco-oweber@gmx.de>
+"Version:     2.0
+"Last Change: 14 Jul
+"License:     This program is free software. It comes without any warranty,
+"             to the extent permitted by applicable law. You can redistribute
+"             it and/or modify it under the terms of the Do What The Fuck You
+"             Want To Public License, Version 2, as published by Sam Hocevar.
+"             See http://sam.zoy.org/wtfpl/COPYING for more details.
+"
+"============================================================================
+
+
+" put this all into a function you can call to force a setup
+" This may be required if you want to patch the dict
+let s:did_setup = 0
+fun! syntastic#Setup()
+  " do this once only:
+  if s:did_setup | return | endif
+  let s:did_setup = 1
+
+" this file contains the declarations of the checkers
+" complicated implementations should be moved into autoload/syntastic.vim (eg
+" see syntastic_checkers#HTML)
+
+" If you don't like the default behavior you can use
+" g:syntastic['post_process'] function to patch the dictionary.
+
+" create local alias of global var
 " vam#DefineAndBind('s:l','g:syntastic','{}')
 if !exists('g:syntastic') | let g:syntastic = {} | endif | let s:c = g:syntastic
 
-" utils {{{1
+" the file_types dict is a list of registered checkers.
+" A checker is a dictionary describing
+" - when to apply the checker
+" - how checking takes place
+" because its a dicts you can easily overwrite any key
+let s:c['file_types'] = get(s:c, 'file_types', {})
+" l/c corresponds to "current list of errors" or location list
+let s:c['list_type'] = get(s:c, 'list_type', 'l')
 
-fun! syntastic#SetLocList(a)
-  call setloclist(winbufnr('%'), a:a)
-endfun
+let s:c['auto_setup'] = get(s:c, 'auto_setup', 1)
+let s:c.tmpfile = tempname()
 
-" TODO currently unused?
-fun! syntastic#ErrorBalloonExpr()
-    if !exists('b:syntastic_balloons') | return '' | endif
-    return get(b:syntastic_balloons, v:beval_lnum, '')
-endfun
+" alias, don't repeat yourself
+let tmp = {}
 
-" TODO currently unused?, vim-addon-signs should be used
-fun! syntastic#HighlightErrors(errors, termfunc)
-    call clearmatches()
-    for item in a:errors
-        if item['col']
-            let lastcol = col([item['lnum'], '$'])
-            let lcol = min([lastcol, item['col']])
-            call matchadd('SpellBad', '\%'.item['lnum'].'l\%'.lcol.'c')
-        else
-            let group = item['type'] == 'E' ? 'SpellBad' : 'SpellCap'
-            let term = a:termfunc(item)
-            if len(term) > 0
-                call matchadd(group, '\%' . item['lnum'] . 'l' . term)
-            endif
-        endif
-    endfor
-endfun
+" dsecription:
+"  applies: does checker apply to current buffer? Vim expression returns bool
 
-" checker implementations {{{1
+" cmd:
+"   if string: shell command. % is replaced by current file
+"   if function: will be called with dict.
+" prerequisites: conditions which must be met so that this checker can be
+"                executed successfully. Must be Vim expression returning bool
 
-fun! syntastic#PythonSimple(list_type)
-  " must use function because % must be quoted the python, not the shell way:
-  if !exists('s:c.py_tmp') | let s:c.py_tmp = tempname() | endif
-  call writefile( [ 'import py_compile,sys'
-                \ , 'sys.stderr=sys.stdout'
-                \ , 'try:'
-                \ , '  py_compile.compile(file="'.expand('%').'", doraise=True)'
-                \ , 'except Exception, e:'
-                \ , '  # import pdb; pdb.set_trace()'
-                \ , '  loc = e.exc_value[1]'
-                \ , '  print "%s:%s:%s:%s" % (loc[0], loc[1], loc[2], e.exc_value[0])'
-                \ ], s:c.py_tmp)
+" PHP
+let tmp['php'] = {
+     \   'applies' : '&ft == "php"'
+     \ , 'check': {'cmd': 'php -l %', 'efm': '%-GNo syntax errors detected in%.%#,PHP Parse error: %#syntax %trror\, %m in %f on line %l,PHP Fatal %trror: %m in %f on line %l,%-GErrors parsing %.%#,%-G\s%#,Parse error: %#syntax %trror\, %m in %f on line %l,Fatal %trror: %m in %f on line %l' }
+     \ }
 
-  call SyntasticCheckSimple(
-    \ 'python '. shellescape(s:c.py_tmp)
-    \ , '%A  File "%f", line %l, %m'
-    \ , a:list_type
-    \ )
-endfun
+" HTML
+let tmp['html'] = {
+    \   'applies' : '&ft == "html"'
+    \ , 'check' : function('syntastic_checkers#HTML')
+    \ , 'prerequisites': 'executable("tidy") && executable("grep")'
+    \ }
 
-fun! syntastic#HTML(list_type) dict abort
-  let tidy_opts = {
-             \'utf-8'       : '-utf8',
-             \'ascii'       : '-ascii',
-             \'latin1'      : '-latin1',
-             \'iso-2022-jp' : '-iso-2022',
-             \'cp1252'      : '-win1252',
-             \'macroman'    : '-mac',
-             \'utf-16le'    : '-utf16le',
-             \'utf-16'      : '-utf16',
-             \'big5'        : '-big5',
-             \'sjis'        : '-shiftjis',
-             \'cp850'       : '-ibm858',
-             \}
- let encopt = get(tidy_opts, &fileencoding, '-utf8')
 
- "grep out the '<table> lacks "summary" attribute' since it is almost
- "always present and almost always useless
-  let cmd = "tidy ".encopt." --new-blocklevel-tags 'section, article, aside, hgroup, header, footer, nav, figure, figcaption'"
-   \ ." --new-inline-tags 'video, audio, embed, mark, progress, meter, time, ruby, rt, rp, canvas, command, details, datalist'"
-   \ ." --new-empty-tags 'wbr, keygen' -e ".shellescape(expand('%'))." 2>&1"
+" xml / xhtml
+" for speed reasons you really want to get
+" http://www.w3.org/TR/xhtml1/xhtml1.tgz and make XML_CATALOG_FILES point to
+" its catalog.xml file! (There are more ways to tell xmllinte about the
+" location of dtd's. That's the most convenient way. The reason is that the
+" servers hosting the dtd files had to server too many clients (eg libraries
+" used by web apps) refetching the dts on each run - which made them collapse.
+let tmp['xml'] = {
+    \   'applies' : '&ft =~ "xhtml\\|xml"'
+    \ , 'check' : {'cmd': 'xmllint --valid --loaddtd --noout --load-trace %', 'efm': "%f:%l:%m"}
+    \ , 'prerequisites': 'executable("xmllint")'
+    \ }
 
-  let list = []
-  let r = get(self, "ignore_regex", "")
-  for l in split(system(cmd),"\n")
-    " if  l =~ 'not approved by W3C' | drop line | ..
-    if r != "" && l =~ r | continue | endif
-    call add(list,  substitute(l, '^\line \(\d\+\) column \(\d\+\) - \(.*\)', expand('%') . ':\1:\2:\3',''))
+" JS
+" contributed by Martin Grenfell & Matthew Kitt's javascript.vim
+" TODO: merge and keep one only?
+
+" prio 1 because it does not require configuration ?
+" TODO test
+let tmp['js_jshint'] = {
+    \   'applies' : '&ft == "js"'
+    \ , 'check' : { 'cmd': 'jshint %', 'efm' : '%f: line %l\, col %c\, %m,%-G%.%#' }
+    \ , 'prerequisites': 'executable("jshint")'
+    \ , 'prio': 1
+    \ }
+
+" TODO test
+let tmp['js_jsl'] = {
+    \   'applies' : '&ft == "js"'
+    \ , 'check' : function('syntastic_checkers#JS_JSL')
+    \ , 'prerequisites': 'executable("jsl")'
+    \ , 'prio': 1
+    \ }
+
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+" we cannot set RUBYOPT on windows like that
+" Marc: Why does it hurt having it set?
+let s:c['ruby_check'] = get(s:c, 'ruby_check', has('win32') || has('win64') ?  'ruby -W1 -T1 -c %' : 'RUBYOPT= ruby -W1 -c %')
+let tmp['ruby'] = {
+    \   'applies' : '&ft == "ruby"'
+    \ , 'check' : {'cmd': s:c.ruby_check, 'efm':  '%-GSyntax OK,%E%f:%l: syntax error\, %m,%Z%p^,%W%f:%l: warning: %m,%Z%p^,%W%f:%l: %m,%-C%.%#' }
+    \ , 'prerequisites': 'executable("ruby")'
+    \ }
+
+" TODO (test)
+let tmp['eruby'] = {
+    \   'applies' : '&ft == "eruby"'
+    \ , 'check' : function('syntastic_checkers#Eruby')
+    \ , 'prerequisites': 'executable("cat") && executabel("sed") && executable("ruby")'
+    \ }
+
+let tmp['haml'] = {
+    \   'applies' : '&ft == "haml"'
+    \ , 'check' : function('syntastic_checkers#Haml')
+    \ , 'prerequisites': 'executable("haml")'
+    \ }
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+" TODO (test). Probably this can be done like HAML
+let tmp['sass'] = {
+    \   'applies' : '&ft == "sass"'
+    \ , 'check' : function('syntastic_checkers#Sass')
+    \ , 'prerequisites': 'executable("haml")'
+    \ }
+
+
+"TODO (test)
+let tmp['coffee'] = {
+    \   'applies' : '&ft == "coffee"'
+    \ , 'check' : {'cmd': 'coffee -c -l -o /tmp %', 'efm': '%EError: In %f\, Parse error on line %l: %m,%EError: In %f\, %m on line %l,%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G' }
+    \ , 'prerequisites': 'executable("coffee")'
+    \ }
+
+let s:c['perl_efm_program'] = get(s:c,'perl_efm_program', $VIMRUNTIME.'/tools/efm_perl.pl -c')
+let tmp['perl'] = {
+    \   'applies' : '&ft == "perl"'
+    \ , 'check' : {'cmd': s:c['perl_efm_program'].' %', 'efm': '%f:%l:%m' }
+    \ , 'prerequisites': 'executable("perl")'
+    \ }
+
+" Sam Nguyen <samxnguyen@gmail.com>
+"TODO (test)
+let tmp['go'] = {
+    \   'applies' : '&ft == "go"'
+    \ , 'check' : {'cmd': '6g -o /dev/null %', 'efm':  '%E%f:%l: %m'}
+    \ , 'prerequisites': 'executable("6g")'
+    \ }
+
+" by Ory Band <oryband at gmail dot com>
+"TODO (test)
+let tmp['css'] = {
+    \   'applies' : '&ft == "css"'
+    \ , 'check' : {'cmd': 'csslint %', 'efm':  '%+Gcsslint:\ There%.%#,%A%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m\ at\ line%.%#,%A%>%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m,%-G%.%#' }
+    \ , 'prerequisites': 'executable("csslint")'
+    \ }
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+"TODO (test)
+let tmp['cucumber'] = {
+    \   'applies' : '&ft == "cucumber"'
+    \ , 'check' : {'cmd': 'cucumber --dry-run --quiet --strict --format pretty %', 'efm':  '%f:%l:%c:%m,%W      %.%# (%m),%-Z%f:%l:%.%#,%-G%.%#' }
+    \ , 'prerequisites': 'executable("cucumber")'
+    \ }
+
+"by      Hannes Schulz <schulz at ais dot uni-bonn dot de>
+" shouldn't the default just be nvcc?
+"TODO (test)
+let s:c['nvcc'] = get(s:c,'nvcc', '/usr/loca/cuda/bin/nvcc')
+let tmp['cudo'] = {
+    \   'applies' : '&ft == "cuda"'
+    \ , 'check' : function('syntastic_checkers#CUDA')
+    \ , 'prerequisites': 'executable(g:syntastic.nvcc)'
+    \ }
+
+"by Julien Blanchard <julien at sideburns dot eu>
+"TODO (test)
+let tmp['less'] = {
+    \   'applies' : '&ft == "less"'
+    \ , 'check' : {'cmd': 'lessc % /dev/null', 'efm':  'Syntax %trror on line %l,! Syntax %trror: on line %l: %m,%-G%.%#' }
+    \ , 'prerequisites': 'executable("lessc")'
+    \ }
+
+"by  Gregor Uhlenheuer <kongo2002 at gmail dot com>
+"TODO (test)
+let tmp['lua'] = {
+    \   'applies' : '&ft == "lua"'
+    \ , 'check' : {'cmd': 'luac -p %', 'efm':  'luac: %#%f:%l: %m' }
+    \ , 'prerequisites': 'executable("luac")'
+    \ }
+
+
+"by  Martin Grenfell <martin.grenfell at gmail dot com>
+"TODO (test)
+let tmp['docbk'] = {
+    \   'applies' : '&ft == "docbk"'
+    \ , 'check' : {'cmd': 'xmllint --xinclude --noout --postvalid %', 'efm':  '%E%f:%l: parser error : %m,%W%f:%l: parser warning : %m,%E%f:%l:%.%# validity error : %m,%W%f:%l:%.%# validity warning : %m,%-Z%p^,%-C%.%#,%-G%.%#' }
+    \ , 'prerequisites': 'executable("xmllint")'
+    \ }
+
+"by  Jason Graham <jason at the-graham dot com>
+"TODO (test)
+let tmp['matlab'] = {
+    \   'applies' : '&ft == "ml"'
+    \ , 'check' : {'cmd': 'mlint -id $* %', 'efm':  'L %l (C %c): %*[a-zA-Z0-9]: %m,L %l (C %c-%*[0-9]): %*[a-zA-Z0-9]: %m' }
+    \ , 'prerequisites': 'executable("mlint")'
+    \ }
+
+"by  Eivind Uggedal <eivind at uggedal dot com>
+"TODO (test)
+let tmp['puppet'] = {
+    \   'applies' : '&ft == "css"'
+    \ , 'check' : {'cmd': 'puppet --color=false --parseonly %', 'efm':  'err: Could not parse for environment %*[a-z]: %m at %f:%l' }
+    \ , 'prerequisites': 'executable("puppet")'
+    \ }
+
+" TODO:, function('syntastic_checkers#SyntaxCheckers_python_Term')
+"TODO (test)
+let tmp['python'] = {
+    \   'applies' : '&ft == "python"'
+    \ , 'check' : {'cmd': 'pyflakes %', 'efm':  '%E%f:%l: could not compile,%-Z%p^,%W%f:%l: %m,%-G%.%#' }
+    \ , 'prerequisites': 'executable("pyflakes")'
+    \ }
+
+let tmp['python_simple'] = {
+      \  'applies' : '&ft == "python"'
+      \ , 'check' : function('syntastic_checkers#PythonSimple')
+      \ , 'prerequisites': 'has("python")'
+      \ }
+
+" by  Martin Grenfell <martin.grenfell at gmail dot com>
+"TODO (test)
+let tmp['latex'] = {
+    \   'applies' : '&ft == "latex"'
+    \ , 'check' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
+    \ , 'prerequisites': 'executable("lacheck")'
+    \ }
+
+" let tmp['xhttm'] =  join with html? TODO
+
+function! SyntaxCheckers_tex_GetLocList()
+    let makeprg = 'lacheck '.shellescape(expand('%'))
+    let errorformat =  '%-G** %f:,%E"%f"\, line %l: %m'
+    return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
+endfunction
+
+"by Eric Thomas <eric.l.m.thomas at gmail dot com>
+" does this do a syntax check only ? No, it runs the code!
+" Thus this should go into vim-addon-actions
+"let tmp['tclsh'] = {
+"    \   'applies' : '&ft == "tcl"'
+"    \ , 'check' : {'cmd': 'ctlsh %', 'efm':  '%f:%l:%m' }
+"    \ , 'prerequisites': 'executable("csslint")'
+"    \ }
+
+" haskell, hs, ghc; use vim-addon-actions which provides background
+" compilation process, or try scion
+" this feature will no longer be provided by syntastic
+
+" C: the old implemention contained many os and library specific code.
+" Its ok to add it. But I don't think it should be default.
+" For now I recommend using make (which is usually fast anyway?) and
+" vim-addon-actions ..
+
+" scala: get github.com/MarcWeber/ensime or use a full blown IDE :(
+
+
+" merge configuration settings keeping user's predefined keys:
+call extend(s:c['file_types'], tmp, 'keep')
+unlet tmp
+
+if s:c.auto_setup
+  augroup SyntasticSetup
+    autocmd BufRead,BufNewFile * call syntastic#SetupBufWriteChecker(1)
+    autocmd BufWritePost * call syntastic#Check()
+  augroup end
+endif
+
+command! SyntasticDebug   echo "List of checkers which think that they are capabale of checking the current buffer:" |
+                       \ echo "[] denotes none (epmty list)" |
+                       \ echo "matching checkers: " . string(keys(syntastic#Options(0))) |
+                       \ echo "matching checkers and prerequisites met: ".string(keys(syntastic#Options(1)))
+
+command! SyntasticDontCheckThisBuf silent! unlet b:syntastic_checker
+command! SetupBufWriteCheckerThisBuf call syntastic#SetupBufWriteChecker(1)
+command! CheckBuf call syntastic#Check()
+
+endf
+
+
+" find checkers which are cabable of checking the current buffer
+fun! syntastic#Options(drop_prerequisites_missmatch)
+  " TODO support prio?
+  let r = {}
+  for [name, dict] in items(s:c['file_types'])
+    if type(dict) != type({}) | continue | endif
+    exec 'let A = '. get(dict,'applies',1) .' && (!a:drop_prerequisites_missmatch || '. get(dict,'prerequisites','1').')'
+    if A
+      let r[name] = dict
+    endif
+    unlet name dict
   endfor
-  call writefile(list, s:c.tmpfile)
-  call SyntasticCheckSimple('', '%W%f:%l:%c:Warning: %m', a:list_type)
-endfun
+  return r
+endf
 
-fun! syntastic#JS_JSL(list_type)
-  throw "TODO"
-"    'efm' : '%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G'
-  let makeprg = "jsl" . jslconf . " -nologo -nofilelisting -nosummary -nocontext -process ".shellescape(expand('%'))
-  let errorformat=''
-  return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-endfun
+fun! syntastic#CheckSimple(cmd, efm, list_type)
+  " echo "syntastic, checking .."
+  exec 'set efm='. escape(a:efm, ' \,|"')
+  " don't use make. scrolling lines are annoying!
+  let g:syntastic.last_cmd = a:cmd
+  if a:cmd != ""
+    call system(a:cmd.' &>'.s:c.tmpfile)
+  endif
+  silent! exec a:list_type.'file '.s:c.tmpfile
+endf
 
-fun! syntastic#Eruby(list_type)
-  " TODO get rid of sed etc?
-  throw "TODO"
-    let makeprg='sed "s/<\%=/<\%/g" '. shellescape(expand("%")) . ' \| RUBYOPT= ruby -e "require \"erb\"; puts ERB.new(ARGF.read, nil, \"-\").src" \| RUBYOPT= ruby -c'
-    let errorformat='%-GSyntax OK,%E-:%l: syntax error\, %m,%Z%p^,%W-:%l: warning: %m,%Z%p^,%-C%.%#'
-    let loclist = SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
+" do the check
+fun! syntastic#Check()
+  if !exists('b:syntastic_checker')
+    echoe 'b:syntastic_checker is not set. Use call syntastic#SetupBufWriteChecker(1 or 0) to do so'
+    return
+  endif
+  if b:syntastic_checker == "" | return | endif
+  let d = s:c.file_types[b:syntastic_checker]
+  let list_type = get(d, 'list_type', s:c.list_type)
+  let e=&efm
+  if type(d.check) == type({}) && has_key(d.check, 'cmd') && has_key(d.check, 'efm')
 
-    "the file name isnt in the output so stick in the buf num manually
-    for i in loclist
-        let i['bufnr'] = bufnr("")
-    endfor
+    " (1) make like checker
+    call syntastic#CheckSimple(substitute(d.check.cmd,'%',shellescape(expand('%')),'%'), d.check.efm, list_type)
 
-    return loclist
-endfun
+  elseif type(d.check) == 2
 
-fun! syntastic#Haml(list_type)
-  " HAML does not add file name :-(. So do so manually
-  let l = split(system("haml -c " . shellescape(expand("%"))),"\n")
-  for i in range(0, len(l)-1)
-    let l[i] = substitute(l[i], '^\%(Syntax\|Haml\) error on line \(\d*\):\(.*\)', expand('%') . ':\1:\2','')
-  endfor
-  call writefile(l, s:c.tmpfile)
-  call SyntasticCheckSimple("", "%f:%l:%m", a:list_type)
-endfun
+    " (2) funcref must fill location /error list
+    call call(d.check, [list_type], d)
 
-
-fun! syntastic#Sass(list_type)
-  throw "TODO"
-
-  "use compass imports if available
-  if g:syntastic_sass_imports == 0 && executable("compass")
-    let g:syntastic_sass_imports = system("compass imports")
-  else
-    let g:syntastic_sass_imports = ""
   endif
 
-  let makeprg='sass '.g:syntastic_sass_imports.' --check '.shellescape(expand('%'))
-  let errorformat = '%ESyntax %trror:%m,%C        on line %l of %f,%Z%m'
-  let errorformat .= ',%Wwarning on line %l:,%Z%m,Syntax %trror on line %l: %m'
-  let loclist = SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-
-  let bn = bufnr("")
-  for i in loclist
-    let i['bufnr'] = bn
+  let any = 0
+  for l in list_type == 'c' ? getqflist() : getloclist(bufwinnr('%'))
+    if get(l, 'lnum', 0) != 0 | let any =1 | break | endif
   endfor
+  " colse open loc/ error list if there are errors / no errors
+  exec list_type.(any ? 'open' : 'close')
 
-  return loclist
-endfun
+  exec 'set efm='.escape(e, ' \,|"')
+endf
 
-
-fun! syntastic#CUDA(list_type)
-  throw "TODO"
-
-    let makeprg = g:syntastic_nvcc_binary.' --cuda -O0 -I . -Xcompiler -fsyntax-only '.shellescape(expand('%')).' -o /dev/null'
-    "let errorformat =  '%-G%f:%s:,%f:%l:%c: %m,%f:%l: %m'
-    let errorformat =  '%*[^"]"%f"%*\D%l: %m,"%f"%*\D%l: %m,%-G%f:%l: (Each undeclared identifier is reported only once,%-G%f:%l: for each function it appears in.),%f:%l:%c:%m,%f(%l):%m,%f:%l:%m,"%f"\, line %l%*\D%c%*[^ ] %m,%D%*\a[%*\d]: Entering directory `%f'',%X%*\a[%*\d]: Leaving directory `%f'',%D%*\a: Entering directory `%f'',%X%*\a: Leaving directory `%f'',%DMaking %*\a in %f,%f|%l| %m'
-
-    if expand('%') =~? '\%(.h\|.hpp\|.cuh\)$'
-        if exists('g:syntastic_cuda_check_header')
-            let makeprg = 'echo > .syntastic_dummy.cu ; '.g:syntastic_nvcc_binary.' --cuda -O0 -I . .syntastic_dummy.cu -Xcompiler -fsyntax-only -include '.shellescape(expand('%')).' -o /dev/null'
-        else
-            return []
-        endif
-    endif
-    return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-endfun
-
-
-
-
-" TODO LUA
-" function! SyntaxCheckers_lua_Term(pos)
-"     let near = matchstr(a:pos['text'], "near '[^']\\+'")
-"     let result = ''
-"     if len(near) > 0
-"         let near = split(near, "'")[1]
-"         if near == '<eof>'
-"             let p = getpos('$')
-"             let a:pos['lnum'] = p[1]
-"             let a:pos['col'] = p[2]
-"             let result = '\%'.p[2].'c'
-"         else
-"             let result = '\V'.near
-"         endif
-"         let open = matchstr(a:pos['text'], "(to close '[^']\\+' at line [0-9]\\+)")
-"         if len(open) > 0
-"             let oline = split(open, "'")[1:2]
-"             let line = 0+strpart(oline[1], 9)
-"             call matchadd('SpellCap', '\%'.line.'l\V'.oline[0])
-"         endif
-"     endif
-"     return result
-" endfun
-" 
-" function! SyntaxCheckers_lua_GetLocList(list_type)
-" 
-"     let loclist = SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-" 
-"     let bufn = bufnr('')
-"     for pos in loclist
-"         let pos['bufnr'] = bufn
-"         let pos['type'] = 'E'
-"     endfor
-" 
-"     call syntastic#HighlightErrors(loclist, function("SyntaxCheckers_lua_Term"))
-" 
-"     return loclist
-" endfun
-"
-"
-"
-
-fun! syntastic#SyntaxCheckers_python_Term(i)
-  throw "TODO"
-    if a:i['type'] ==# 'E'
-        let a:i['text'] = "Syntax error"
-    endif
-    if match(a:i['text'], 'is assigned to but never used') > -1
-                \ || match(a:i['text'], 'imported but unused') > -1
-                \ || match(a:i['text'], 'undefined name') > -1
-                \ || match(a:i['text'], 'redefinition of unused') > -1
-
-        let term = split(a:i['text'], "'", 1)[1]
-        return '\V'.term
-    endif
-    return ''
-endfun
-
-" xhtml 
-fun! syntastic#Tidy(list_type)
-  throw "TODO"
-  " TODO: join this with html.vim DRY's sake?
-    let tidy_opts = {
-                \'utf-8'       : '-utf8',
-                \'ascii'       : '-ascii',
-                \'latin1'      : '-latin1',
-                \'iso-2022-jp' : '-iso-2022',
-                \'cp1252'      : '-win1252',
-                \'macroman'    : '-mac',
-                \'utf-16le'    : '-utf16le',
-                \'utf-16'      : '-utf16',
-                \'big5'        : '-big5',
-                \'sjis'        : '-shiftjis',
-                \'cp850'       : '-ibm858',
-                \}
-    return get(tidy_opts, &fileencoding, '-utf8')
-
-    let encopt = s:TidyEncOptByFenc()
-    let makeprg="tidy ".encopt." -xml -e ".shellescape(expand('%'))
-    let errorformat='%Wline %l column %c - Warning: %m,%Eline %l column %c - Error: %m,%-G%.%#,%-G%.%#'
-    let loclist = SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
-
-    "the file name isnt in the output so stick in the buf num manually
-    for i in loclist
-        let i['bufnr'] = bufnr("")
-    endfor
-
-    return loclist
-endfun
-
+fun! syntastic#SetupBufWriteChecker(setup_au)
+  " try to find a matching checker
+  let b:syntastic_checker = tlib#input#List('s', 'Syntastic filetype checker:', keys(syntastic#Options(1)))
+  if b:syntastic_checker == "" | return 0 | endif
+  return 1
+endf
