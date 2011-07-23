@@ -340,5 +340,10 @@ if s:c.auto_setup
   augroup end
 endif
 
-command SyntasticDebug : echo "matching checkers: " . string(keys(SyntasticOptions(0))) |
+command SyntasticDebug   echo "List of checkers which think that they are capabale of checking the current buffer:" |
+                       \ echo "[] denotes none (epmty list)" |
+                       \ echo "matching checkers: " . string(keys(SyntasticOptions(0))) |
                        \ echo "matching checkers and prerequisites met: ".string(keys(SyntasticOptions(1)))
+
+command SyntasticDontCheckThisBuf silent! unlet b:syntastic_checker
+command SyntasticSetupBufWriteCheckerThisBuf call SyntasticSetupBufWriteChecker(1)

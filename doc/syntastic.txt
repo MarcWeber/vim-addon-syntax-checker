@@ -14,6 +14,8 @@ customizations:
 Put into your .vimrc:
 
     let g:syntastic = {file_types : {}}
+    " set this if you prefer activating the checkers manually
+    " let g:syntastic['auto_setup'] = 0 
     let g:syntastic.file_types['new_type'] = Examples see plugin/syntastic.vim
     let g:syntastic.file_types['xml'] = 'disabled'
 
@@ -29,6 +31,9 @@ dict:
 Special notes:
   Some checkers such as xml / xhtml work best if you have local copies of the
   dtds. See comments
+
+This branch / fork is maintained by <marco-oweberNOSPAM@gmx.de> Marc Weber.
+
 
 
 OLD DOCS: TODO rewrite and adopt?
