@@ -29,7 +29,11 @@ if !exists('g:syntastic') | let g:syntastic = {} | endif | let s:c = g:syntastic
 " - when to apply the checker
 " - how checking takes place
 " because its a dicts you can easily overwrite any key
-let s:cfg['file_types'] = get(s:c, 'file_types', {})
+let s:c['file_types'] = get(s:c, 'file_types', {})
+" l/c corresponds to "current list of errors" or location list
+let s:c['list_type'] = get(s:c, 'list_type', 'l')
+
+let s:c['auto_setup'] = get(s:c, 'auto_setup', 1)
 
 " alias, don't repeat yourself
 let tmp = {}
@@ -55,7 +59,7 @@ let tmp['html'] = {
     \   'applies' : '&ft == "html"'
     \ , 'check' : function('syntastic#HTML')
     \ , 'prerequisites': 'executable("tidy") && executable("grep")'
-    \ , 'tidy_opts' = {
+    \ , 'tidy_opts' : {
         \'utf-8'       : '-utf8',
         \'ascii'       : '-ascii',
         \'latin1'      : '-latin1',
@@ -67,7 +71,21 @@ let tmp['html'] = {
         \'big5'        : '-big5',
         \'sjis'        : '-shiftjis',
         \'cp850'       : '-ibm858',
-        \},
+        \}
+    \ }
+
+
+" xhtml
+" for speed reasons you really want to get
+" http://www.w3.org/TR/xhtml1/xhtml1.tgz and make XML_CATALOG_FILES point to
+" its catalog.xml file! (There are more ways to tell xmllinte about the
+" location of dtd's. That's the most convenient way. The reason is that the
+" servers hosting the dtd files had to server too many clients (eg libraries
+" used by web apps) refetching the dts on each run - which made them collapse.
+let tmp['xml'] = {
+    \   'applies' : '&ft =~ "xhtml\\|xml"'
+    \ , 'cmd' : {'cmd': 'xmllint --valid --loaddtd --noout --load-trace %', 'efm': ""}
+    \ , 'prerequisites': 'executable("xmllint")'
     \ }
 
 " JS
@@ -93,10 +111,10 @@ let tmp['js_jsl'] = {
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
 " we cannot set RUBYOPT on windows like that
 " Marc: Why does it hurt having it set?
-let s:cfg['ruby_check'] = get(s:c, 'ruby_check', has('win32') || has('win64') ?  'ruby -W1 -T1 -c %' : 'RUBYOPT= ruby -W1 -c %')
+let s:c['ruby_check'] = get(s:c, 'ruby_check', has('win32') || has('win64') ?  'ruby -W1 -T1 -c %' : 'RUBYOPT= ruby -W1 -c %')
 let tmp['ruby'] = {
     \   'applies' : '&ft == "rb"'
-    \ , 'cmd' : {'cmd': s:cfg.ruby_check, 'efm':  '%-GSyntax OK,%E%f:%l: syntax error\, %m,%Z%p^,%W%f:%l: warning: %m,%Z%p^,%W%f:%l: %m,%-C%.%#' }
+    \ , 'cmd' : {'cmd': s:c.ruby_check, 'efm':  '%-GSyntax OK,%E%f:%l: syntax error\, %m,%Z%p^,%W%f:%l: warning: %m,%Z%p^,%W%f:%l: %m,%-C%.%#' }
     \ , 'prerequisites': 'executable("csslint")'
     \ }
 
@@ -126,10 +144,10 @@ let tmp['coffee'] = {
     \ , 'prerequisites': 'executable("coffee")'
     \ }
 
-let s:cfg['perl_efm_program'] = get(s:cfg,'perl_efm_program', $VIMRUNTIME.'/tools/efm_perl.pl -c')
+let s:c['perl_efm_program'] = get(s:c,'perl_efm_program', $VIMRUNTIME.'/tools/efm_perl.pl -c')
 let tmp['perl'] = {
     \   'applies' : '&ft == "perl"'
-    \ , 'cmd' : {'cmd': s:cfg['perl_efm_program'].' %', 'efm': '%f:%l:%m' }
+    \ , 'cmd' : {'cmd': s:c['perl_efm_program'].' %', 'efm': '%f:%l:%m' }
     \ , 'prerequisites': 'executable("perl")'
     \ }
 
@@ -156,7 +174,7 @@ let tmp['cucumber'] = {
 
 "by      Hannes Schulz <schulz at ais dot uni-bonn dot de>
 " shouldn't the default just be nvcc?
-let s:cfg['nvcc'] = get(s:cfg,'nvcc', '/usr/loca/cuda/bin/nvcc')
+let s:c['nvcc'] = get(s:c,'nvcc', '/usr/loca/cuda/bin/nvcc')
 let tmp['cudo'] = {
     \   'applies' : '&ft == "cuda"'
     \ , 'cmd' : function('syntastic#CUDA')
@@ -243,11 +261,83 @@ endfunction
 
 
 " merge configuration settings keeping user's predefined keys:
-call extend(s:cfg['file_types'], tmp, 'keep')
+call extend(s:c['file_types'], tmp, 'keep')
 unlet tmp
 
-if has_key(s:cfg, 'post_process')
+if has_key(s:c, 'post_process')
   " allow user to drop keys or overwrite defaults ..
-  call s:cfg.post_process()
+  call s:c.post_process()
 endif
 
+" find checkers which are cabable of checking the current buffer
+fun! SyntasticOptions(drop_prerequisites_missmatch)
+  let r = {}
+  for [name, dict] in items(s:c['file_types'])
+    exec 'let A = '. get(dict,'applies',1) .' && (!a:drop_prerequisites_missmatch || '. get(dict,'prerequisites','1').')'
+    if A
+      let r[name] = dict
+    endif
+    unlet name dict
+  endfor
+  return r
+endf
+
+" do the check
+fun! SyntasticCheck()
+  if !exists('b:syntastic_checker')
+    echoe 'b:syntastic_checker is not set. Use call SyntasticSetupBufWriteChecker(1 or 0) to do so'
+    return
+  endif
+  if b:syntastic_checker == "" | return | endif
+  let d = s:c.file_types[b:syntastic_checker]
+  let list_type = get(d, 'list_type', s:c.list_type)
+  let e=&efm
+  if !exists('s:c.tmpfile') | let s:c.tmpfile = tempname() | endif
+  
+  if type(d.cmd) == type({}) && has_key(d.cmd, 'cmd') && has_key(d.cmd, 'efm')
+
+    " (1) make like checker
+    " echo "syntastic, checking .."
+    exec 'let efm="'. escape(d.cmd.efm, '"').'"'
+    " don't use make. scrolling lines are annoying!
+    call system(substitute(d.cmd.cmd,'%',shellescape(expand('%')),'%').' &>'.s:c.tmpfile)
+    silent! exec list_type.'file '.s:c.tmpfile
+
+  elseif type(d.cmd) == 2
+
+    " (2) funcref must fill location /error list
+    call call(d.cmd, [list_type], d)
+
+  endif
+
+  let any = 0
+  for l in list_type == 'c' ? getqflist() : getloclist(bufwinnr('%'))
+    if get(l, 'lnum', 0) != 0 | let any =1 | break | endif
+  endfor
+  " colse open loc/ error list if there are errors / no errors
+  exec list_type.(any ? 'open' : 'close')
+
+  exec 'let efm="'.escape(e, '"').'"'
+endf
+
+fun! SyntasticSetupBufWriteChecker(setup_au)
+  " try to find a matching checker
+  let b:syntastic_checker = tlib#input#List('s', 'Syntastic filetype checker:', keys(SyntasticOptions(1)))
+  if b:syntastic_checker == "" | return 0 | endif
+  augroup SyntasticCheck
+    au!
+    if a:setup_au
+      au BufWritePost <buffer> call SyntasticCheck()
+    endif
+  augroup end
+  return 1
+endf
+
+if s:c.auto_setup
+  augroup SyntasticSetup
+    autocmd BufRead,BufNewFile * call SyntasticSetupBufWriteChecker(1)
+  augroup end
+endif
+
+command SyntasticDebug : echo "matching checkers: " . string(keys(SyntasticOptions(0))) |
+                       \ echo "matching checkers and prerequisites met: ".string(keys(SyntasticOptions(1)))
