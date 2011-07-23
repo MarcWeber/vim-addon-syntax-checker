@@ -34,6 +34,7 @@ let s:c['file_types'] = get(s:c, 'file_types', {})
 let s:c['list_type'] = get(s:c, 'list_type', 'l')
 
 let s:c['auto_setup'] = get(s:c, 'auto_setup', 1)
+let s:c.tmpfile = tempname()
 
 " alias, don't repeat yourself
 let tmp = {}
@@ -53,7 +54,7 @@ let tmp['php'] = {
      \ , 'check': {'cmd': 'php -l %', 'efm': '%-GNo syntax errors detected in%.%#,PHP Parse error: %#syntax %trror\, %m in %f on line %l,PHP Fatal %trror: %m in %f on line %l,%-GErrors parsing %.%#,%-G\s%#,Parse error: %#syntax %trror\, %m in %f on line %l,Fatal %trror: %m in %f on line %l' }
      \ }
 
-" HTML
+" HTML (TODO: test and fix)
 let tmp['html'] = {
     \   'applies' : '&ft == "html"'
     \ , 'check' : function('syntastic#HTML')
@@ -92,6 +93,7 @@ let tmp['xml'] = {
 " TODO: merge and keep one only?
 
 " prio 1 because it does not require configuration ?
+" TODO test
 let tmp['js_jshint'] = {
     \   'applies' : '&ft == "js"'
     \ , 'check' : { 'cmd': 'jshint %', 'efm' : '%f: line %l\, col %c\, %m,%-G%.%#' }
@@ -99,6 +101,7 @@ let tmp['js_jshint'] = {
     \ , 'prio': 1
     \ }
 
+" TODO test
 let tmp['js_jsl'] = {
     \   'applies' : '&ft == "js"'
     \ , 'check' : function('syntastic#JS_JSL')
@@ -112,11 +115,12 @@ let tmp['js_jsl'] = {
 " Marc: Why does it hurt having it set?
 let s:c['ruby_check'] = get(s:c, 'ruby_check', has('win32') || has('win64') ?  'ruby -W1 -T1 -c %' : 'RUBYOPT= ruby -W1 -c %')
 let tmp['ruby'] = {
-    \   'applies' : '&ft == "rb"'
+    \   'applies' : '&ft == "ruby"'
     \ , 'check' : {'cmd': s:c.ruby_check, 'efm':  '%-GSyntax OK,%E%f:%l: syntax error\, %m,%Z%p^,%W%f:%l: warning: %m,%Z%p^,%W%f:%l: %m,%-C%.%#' }
-    \ , 'prerequisites': 'executable("csslint")'
+    \ , 'prerequisites': 'executable("ruby")'
     \ }
 
+" TODO (test)
 let tmp['eruby'] = {
     \   'applies' : '&ft == "eruby"'
     \ , 'check' : function('syntastic#Eruby')
@@ -130,6 +134,7 @@ let tmp['haml'] = {
     \ }
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
+" TODO (test). Probably this can be done like HAML
 let tmp['sass'] = {
     \   'applies' : '&ft == "sass"'
     \ , 'check' : function('syntastic#Sass')
@@ -137,6 +142,7 @@ let tmp['sass'] = {
     \ }
 
 
+"TODO (test)
 let tmp['coffee'] = {
     \   'applies' : '&ft == "coffee"'
     \ , 'check' : {'cmd': 'coffee -c -l -o /tmp %', 'efm': '%EError: In %f\, Parse error on line %l: %m,%EError: In %f\, %m on line %l,%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G' }
@@ -151,6 +157,7 @@ let tmp['perl'] = {
     \ }
 
 " Sam Nguyen <samxnguyen@gmail.com>
+"TODO (test)
 let tmp['go'] = {
     \   'applies' : '&ft == "go"'
     \ , 'check' : {'cmd': '6g -o /dev/null %', 'efm':  '%E%f:%l: %m'}
@@ -158,6 +165,7 @@ let tmp['go'] = {
     \ }
 
 " by Ory Band <oryband at gmail dot com>
+"TODO (test)
 let tmp['css'] = {
     \   'applies' : '&ft == "css"'
     \ , 'check' : {'cmd': 'csslint %', 'efm':  '%+Gcsslint:\ There%.%#,%A%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m\ at\ line%.%#,%A%>%f:,%C%n:\ %t%\\w%\\+\ at\ line\ %l\,\ col\ %c,%Z%m,%-G%.%#' }
@@ -165,6 +173,7 @@ let tmp['css'] = {
     \ }
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
+"TODO (test)
 let tmp['cucumber'] = {
     \   'applies' : '&ft == "cucumber"'
     \ , 'check' : {'cmd': 'cucumber --dry-run --quiet --strict --format pretty %', 'efm':  '%f:%l:%c:%m,%W      %.%# (%m),%-Z%f:%l:%.%#,%-G%.%#' }
@@ -173,6 +182,7 @@ let tmp['cucumber'] = {
 
 "by      Hannes Schulz <schulz at ais dot uni-bonn dot de>
 " shouldn't the default just be nvcc?
+"TODO (test)
 let s:c['nvcc'] = get(s:c,'nvcc', '/usr/loca/cuda/bin/nvcc')
 let tmp['cudo'] = {
     \   'applies' : '&ft == "cuda"'
@@ -181,6 +191,7 @@ let tmp['cudo'] = {
     \ }
 
 "by Julien Blanchard <julien at sideburns dot eu>
+"TODO (test)
 let tmp['less'] = {
     \   'applies' : '&ft == "less"'
     \ , 'check' : {'cmd': 'lessc % /dev/null', 'efm':  'Syntax %trror on line %l,! Syntax %trror: on line %l: %m,%-G%.%#' }
@@ -188,6 +199,7 @@ let tmp['less'] = {
     \ }
 
 "by  Gregor Uhlenheuer <kongo2002 at gmail dot com>
+"TODO (test)
 let tmp['lua'] = {
     \   'applies' : '&ft == "lua"'
     \ , 'check' : {'cmd': 'luac -p %', 'efm':  'luac: %#%f:%l: %m' }
@@ -196,6 +208,7 @@ let tmp['lua'] = {
 
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
+"TODO (test)
 let tmp['docbk'] = {
     \   'applies' : '&ft == "css"'
     \ , 'check' : {'cmd': 'xmllint --xinclude --noout --postvalid %', 'efm':  '%E%f:%l: parser error : %m,%W%f:%l: parser warning : %m,%E%f:%l:%.%# validity error : %m,%W%f:%l:%.%# validity warning : %m,%-Z%p^,%-C%.%#,%-G%.%#' }
@@ -203,6 +216,7 @@ let tmp['docbk'] = {
     \ }
 
 "by  Jason Graham <jason at the-graham dot com>
+"TODO (test)
 let tmp['matlab'] = {
     \   'applies' : '&ft == "ml"'
     \ , 'check' : {'cmd': 'mlint -id $* %', 'efm':  'L %l (C %c): %*[a-zA-Z0-9]: %m,L %l (C %c-%*[0-9]): %*[a-zA-Z0-9]: %m' }
@@ -210,6 +224,7 @@ let tmp['matlab'] = {
     \ }
 
 "by  Eivind Uggedal <eivind at uggedal dot com>
+"TODO (test)
 let tmp['puppet'] = {
     \   'applies' : '&ft == "css"'
     \ , 'check' : {'cmd': 'puppet --color=false --parseonly %', 'efm':  'err: Could not parse for environment %*[a-z]: %m at %f:%l' }
@@ -217,6 +232,7 @@ let tmp['puppet'] = {
     \ }
 
 " TODO:, function('syntastic#SyntaxCheckers_python_Term')
+"TODO (test)
 let tmp['python'] = {
     \   'applies' : '&ft == "python"'
     \ , 'check' : {'cmd': 'pyflakes %', 'efm':  '%E%f:%l: could not compile,%-Z%p^,%W%f:%l: %m,%-G%.%#' }
@@ -230,6 +246,7 @@ let tmp['python_simple'] = {
       \ }
 
 " by  Martin Grenfell <martin.grenfell at gmail dot com>
+"TODO (test)
 let tmp['latex'] = {
     \   'applies' : '&ft == "latex"'
     \ , 'check' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
@@ -276,6 +293,7 @@ endif
 
 " find checkers which are cabable of checking the current buffer
 fun! SyntasticOptions(drop_prerequisites_missmatch)
+  " TODO support prio?
   let r = {}
   for [name, dict] in items(s:c['file_types'])
     if type(dict) != type({}) | continue | endif
@@ -293,7 +311,9 @@ fun! SyntasticCheckSimple(cmd, efm, list_type)
   exec 'set efm='. escape(a:efm, ' \,|"')
   " don't use make. scrolling lines are annoying!
   let g:syntastic.last_cmd = a:cmd
-  call system(a:cmd.' &>'.s:c.tmpfile)
+  if a:cmd != ""
+    call system(a:cmd.' &>'.s:c.tmpfile)
+  endif
   silent! exec a:list_type.'file '.s:c.tmpfile
 endf
 
@@ -307,8 +327,6 @@ fun! SyntasticCheck()
   let d = s:c.file_types[b:syntastic_checker]
   let list_type = get(d, 'list_type', s:c.list_type)
   let e=&efm
-  if !exists('s:c.tmpfile') | let s:c.tmpfile = tempname() | endif
-  
   if type(d.check) == type({}) && has_key(d.check, 'cmd') && has_key(d.check, 'efm')
 
     " (1) make like checker

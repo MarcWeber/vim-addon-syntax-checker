@@ -53,7 +53,7 @@ fun! syntastic#PythonSimple(list_type)
     \ )
 endfun
 
-fun! syntastic#HTML() dict abort
+fun! syntastic#HTML(list_type) dict abort
   throw "TODO"
   " return get(tidy_opts, &fileencoding, '-utf8')
     "grep out the '<table> lacks "summary" attribute' since it is almost
@@ -72,7 +72,7 @@ fun! syntastic#HTML() dict abort
   "
 endfun
 
-fun! syntastic#JS_JSL()
+fun! syntastic#JS_JSL(list_type)
   throw "TODO"
 "    'efm' : '%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G'
   let makeprg = "jsl" . jslconf . " -nologo -nofilelisting -nosummary -nocontext -process ".shellescape(expand('%'))
@@ -80,7 +80,7 @@ fun! syntastic#JS_JSL()
   return SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
 endfun
 
-fun! syntastic#Eruby()
+fun! syntastic#Eruby(list_type)
   " TODO get rid of sed etc?
   throw "TODO"
     let makeprg='sed "s/<\%=/<\%/g" '. shellescape(expand("%")) . ' \| RUBYOPT= ruby -e "require \"erb\"; puts ERB.new(ARGF.read, nil, \"-\").src" \| RUBYOPT= ruby -c'
@@ -95,21 +95,18 @@ fun! syntastic#Eruby()
     return loclist
 endfun
 
-fun! syntastic#Haml()
-  " extra function required?
-  throw "TODO"
-  let output = system("haml -c " . shellescape(expand("%")))
-  if v:shell_error != 0
-    "haml only outputs the first error, so parse it ourselves
-    let line = substitute(output, '^\%(Syntax\|Haml\) error on line \(\d*\):.*', '\1', '')
-    let msg = substitute(output, '^\%(Syntax\|Haml\) error on line \d*:\(.*\)', '\1', '')
-    return [{'lnum' : line, 'text' : msg, 'bufnr': bufnr(""), 'type': 'E' }]
-  endif
-  return []
+fun! syntastic#Haml(list_type)
+  " HAML does not add file name :-(. So do so manually
+  let l = split(system("haml -c " . shellescape(expand("%"))),"\n")
+  for i in range(0, len(l)-1)
+    let l[i] = substitute(l[i], '^\%(Syntax\|Haml\) error on line \(\d*\):\(.*\)', expand('%') . ':\1:\2','')
+  endfor
+  call writefile(l, s:c.tmpfile)
+  call SyntasticCheckSimple("", "%f:%l:%m", a:list_type)
 endfun
 
 
-fun! syntastic#Sass()
+fun! syntastic#Sass(list_type)
   throw "TODO"
 
   "use compass imports if available
@@ -133,7 +130,7 @@ fun! syntastic#Sass()
 endfun
 
 
-fun! syntastic#CUDA()
+fun! syntastic#CUDA(list_type)
   throw "TODO"
 
     let makeprg = g:syntastic_nvcc_binary.' --cuda -O0 -I . -Xcompiler -fsyntax-only '.shellescape(expand('%')).' -o /dev/null'
@@ -177,7 +174,7 @@ endfun
 "     return result
 " endfun
 " 
-" function! SyntaxCheckers_lua_GetLocList()
+" function! SyntaxCheckers_lua_GetLocList(list_type)
 " 
 "     let loclist = SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
 " 
@@ -212,7 +209,7 @@ fun! syntastic#SyntaxCheckers_python_Term(i)
 endfun
 
 " xhtml 
-fun! syntastic#Tidy()
+fun! syntastic#Tidy(list_type)
   throw "TODO"
   " TODO: join this with html.vim DRY's sake?
     let tidy_opts = {

@@ -32,6 +32,9 @@ Special notes:
   Some checkers such as xml / xhtml work best if you have local copies of the
   dtds. See comments
 
+  syntax checkers should never execute code. If you want to do that use
+  vim-addon-actions!
+
 This branch / fork is maintained by <marco-oweberNOSPAM@gmx.de> Marc Weber.
 
 
