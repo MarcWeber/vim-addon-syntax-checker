@@ -75,7 +75,7 @@ let tmp['html'] = {
     \ }
 
 
-" xhtml
+" xml / xhtml
 " for speed reasons you really want to get
 " http://www.w3.org/TR/xhtml1/xhtml1.tgz and make XML_CATALOG_FILES point to
 " its catalog.xml file! (There are more ways to tell xmllinte about the
@@ -273,6 +273,7 @@ endif
 fun! SyntasticOptions(drop_prerequisites_missmatch)
   let r = {}
   for [name, dict] in items(s:c['file_types'])
+    if type(dict) != type({}) | continue | endif
     exec 'let A = '. get(dict,'applies',1) .' && (!a:drop_prerequisites_missmatch || '. get(dict,'prerequisites','1').')'
     if A
       let r[name] = dict

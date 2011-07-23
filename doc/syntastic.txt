@@ -1,3 +1,39 @@
+Refactored Syntastic:
+
+This plugin checks syntax of your code (html, js, perl, ruby, ..) on buf write.
+If errors are found they are shown in the location or quickfix list. The
+location or quickfix window is opened and closed automatically.
+
+The original version can be found here: git://github.com/scrooloose/syntastic.git.
+Refactoring had to take place because
+- I felt there was too much duplicaet code
+- it was not customizable enough.
+
+customizations:
+
+Put into your .vimrc:
+
+    let g:syntastic = {file_types : {}}
+    let g:syntastic.file_types['new_type'] = Examples see plugin/syntastic.vim
+    let g:syntastic.file_types['xml'] = 'disabled'
+
+If you dislike standard behaviour you can define the post hook and patch the
+dict:
+
+  fun SyntasticPatch()
+    let g:syntastic.file_types['js'].cmd.efm = "overwrite error fromat here"
+  endfun
+  let g:syntastic.post_process = function('SyntasticPatch')
+
+
+Special notes:
+  Some checkers such as xml / xhtml work best if you have local copies of the
+  dtds. See comments
+
+
+OLD DOCS: TODO rewrite and adopt?
+
+
 *syntastic.txt*   Syntax checking on the fly has never been so pimp.
 *syntastic*
 
