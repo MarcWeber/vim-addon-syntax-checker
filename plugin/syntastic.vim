@@ -54,24 +54,11 @@ let tmp['php'] = {
      \ , 'check': {'cmd': 'php -l %', 'efm': '%-GNo syntax errors detected in%.%#,PHP Parse error: %#syntax %trror\, %m in %f on line %l,PHP Fatal %trror: %m in %f on line %l,%-GErrors parsing %.%#,%-G\s%#,Parse error: %#syntax %trror\, %m in %f on line %l,Fatal %trror: %m in %f on line %l' }
      \ }
 
-" HTML (TODO: test and fix)
+" HTML
 let tmp['html'] = {
     \   'applies' : '&ft == "html"'
     \ , 'check' : function('syntastic#HTML')
     \ , 'prerequisites': 'executable("tidy") && executable("grep")'
-    \ , 'tidy_opts' : {
-        \'utf-8'       : '-utf8',
-        \'ascii'       : '-ascii',
-        \'latin1'      : '-latin1',
-        \'iso-2022-jp' : '-iso-2022',
-        \'cp1252'      : '-win1252',
-        \'macroman'    : '-mac',
-        \'utf-16le'    : '-utf16le',
-        \'utf-16'      : '-utf16',
-        \'big5'        : '-big5',
-        \'sjis'        : '-shiftjis',
-        \'cp850'       : '-ibm858',
-        \}
     \ }
 
 
@@ -368,10 +355,10 @@ if s:c.auto_setup
   augroup end
 endif
 
-command SyntasticDebug   echo "List of checkers which think that they are capabale of checking the current buffer:" |
+command! SyntasticDebug   echo "List of checkers which think that they are capabale of checking the current buffer:" |
                        \ echo "[] denotes none (epmty list)" |
                        \ echo "matching checkers: " . string(keys(SyntasticOptions(0))) |
                        \ echo "matching checkers and prerequisites met: ".string(keys(SyntasticOptions(1)))
 
-command SyntasticDontCheckThisBuf silent! unlet b:syntastic_checker
-command SyntasticSetupBufWriteCheckerThisBuf call SyntasticSetupBufWriteChecker(1)
+command! SyntasticDontCheckThisBuf silent! unlet b:syntastic_checker
+command! SyntasticSetupBufWriteCheckerThisBuf call SyntasticSetupBufWriteChecker(1)

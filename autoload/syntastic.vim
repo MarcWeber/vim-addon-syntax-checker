@@ -54,22 +54,34 @@ fun! syntastic#PythonSimple(list_type)
 endfun
 
 fun! syntastic#HTML(list_type) dict abort
-  throw "TODO"
-  " return get(tidy_opts, &fileencoding, '-utf8')
-    "grep out the '<table> lacks "summary" attribute' since it is almost
-    "always present and almost always useless
-    let encopt = s:TidyEncOptByFenc()
-    let makeprg="tidy ".encopt." --new-blocklevel-tags 'section, article, aside, hgroup, header, footer, nav, figure, figcaption' --new-inline-tags 'video, audio, embed, mark, progress, meter, time, ruby, rt, rp, canvas, command, details, datalist' --new-empty-tags 'wbr, keygen' -e ".shellescape(expand('%'))." 2>&1 \\| grep -v '\<table\> lacks \"summary\" attribute' \\| grep -v 'not approved by W3C'"
-    let errorformat='%Wline %l column %c - Warning: %m,%Eline %l column %c - Error: %m,%-G%.%#,%-G%.%#'
-    let loclist = SyntasticMake({ 'makeprg': makeprg, 'errorformat': errorformat })
+  let tidy_opts = {
+             \'utf-8'       : '-utf8',
+             \'ascii'       : '-ascii',
+             \'latin1'      : '-latin1',
+             \'iso-2022-jp' : '-iso-2022',
+             \'cp1252'      : '-win1252',
+             \'macroman'    : '-mac',
+             \'utf-16le'    : '-utf16le',
+             \'utf-16'      : '-utf16',
+             \'big5'        : '-big5',
+             \'sjis'        : '-shiftjis',
+             \'cp850'       : '-ibm858',
+             \}
+ let encopt = get(tidy_opts, &fileencoding, '-utf8')
 
-    "the file name isnt in the output so stick in the buf num manually
-    for i in loclist
-        let i['bufnr'] = bufnr("")
-    endfor
+ "grep out the '<table> lacks "summary" attribute' since it is almost
+ "always present and almost always useless
+  let cmd = "tidy ".encopt." --new-blocklevel-tags 'section, article, aside, hgroup, header, footer, nav, figure, figcaption'"
+   \ ." --new-inline-tags 'video, audio, embed, mark, progress, meter, time, ruby, rt, rp, canvas, command, details, datalist'"
+   \ ." --new-empty-tags 'wbr, keygen' -e ".shellescape(expand('%'))." 2>&1"
 
-  return get(tidy_opts, &fileencoding, '-utf8')
-  "
+  let l = split(system(cmd),"\n")
+  for i in range(0, len(l)-1)
+    " if  l =~ 'not approved by W3C' | drop line | ..
+    let l[i] = substitute(l[i], '^\line \(\d\+\) column \(\d\+\) - \(.*\)', expand('%') . ':\1:\2:\3','')
+  endfor
+  call writefile(l, s:c.tmpfile)
+  call SyntasticCheckSimple('', '%W%f:%l:%c:Warning: %m', a:list_type)
 endfun
 
 fun! syntastic#JS_JSL(list_type)
