@@ -331,7 +331,6 @@ endf
 " do the check
 fun! syntastic#Check()
   if !exists('b:syntastic_checker')
-    echoe 'b:syntastic_checker is not set. Use call syntastic#SetupBufWriteChecker(1 or 0) to do so'
     return
   endif
   if b:syntastic_checker == "" | return | endif
