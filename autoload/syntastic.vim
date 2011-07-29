@@ -307,7 +307,7 @@ fun! syntastic#Options(drop_prerequisites_missmatch)
   " TODO support prio?
   let r = {}
   for [name, dict] in items(s:c['file_types'])
-    if type(dict) != type({}) | continue | endif
+    if type(dict) != type({}) | unlet name dict | continue | endif
     exec 'let A = '. get(dict,'applies',1) .' && (!a:drop_prerequisites_missmatch || '. get(dict,'prerequisites','1').')'
     if A
       let r[name] = dict
