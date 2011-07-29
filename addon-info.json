@@ -1,0 +1,12 @@
+{
+  "name" : "syntastic",
+  "version" : "dev",
+  "author" : "Martin Grenfell",
+  "maintainer" : "Marc Weber <marco-oweber@gmx.de> (I mantain this fork only)",
+  "repository" : {"type": "git", "url": "git://github.com/MarcWeber/Syntastic.git"},
+  "dependencies" : {
+    "vim-addon-mw-utils": {},
+    "tlib": {},
+  },
+  "description" : "syntax checker for perl, ruby, sh, python, ..."
+}
