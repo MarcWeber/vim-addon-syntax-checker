@@ -1,0 +1,1 @@
+call syntastic#Setup()
