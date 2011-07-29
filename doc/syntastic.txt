@@ -6,7 +6,7 @@ location or quickfix window is opened and closed automatically.
 
 The original version can be found here: git://github.com/scrooloose/syntastic.git.
 Refactoring had to take place because
-- I felt there was too much duplicaet code
+- I felt there was too much duplicated code
 - it was not customizable enough.
 
 customizations:
