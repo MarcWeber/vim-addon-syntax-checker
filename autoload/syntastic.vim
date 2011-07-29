@@ -92,7 +92,7 @@ let tmp['xml'] = {
 " prio 1 because it does not require configuration ?
 " TODO test
 let tmp['js_jshint'] = {
-    \   'applies' : '&ft == "js"'
+    \   'applies' : '&ft == "javascript"'
     \ , 'check' : { 'cmd': 'jshint %', 'efm' : '%f: line %l\, col %c\, %m,%-G%.%#' }
     \ , 'prerequisites': 'executable("jshint")'
     \ , 'prio': 1
@@ -100,12 +100,20 @@ let tmp['js_jshint'] = {
 
 " TODO test
 let tmp['js_jsl'] = {
-    \   'applies' : '&ft == "js"'
+    \   'applies' : '&ft == "javascript"'
     \ , 'check' : funcref#Function('syntastic_checkers#JS_JSL')
     \ , 'prerequisites': 'executable("jsl")'
     \ , 'prio': 1
     \ }
 
+" spidermonkey: {foo:3,} is fine according to this check, but IE yells about
+" this. So take care!
+let tmp['js'] = {
+    \   'applies' : '&ft == "javascript"'
+    \ , 'check' : {'cmd': 'js -C %', 'efm':  '%E%f:%l:\ %m,%-C:%l:\ %s,%Z%s:%p'}
+    \ , 'prerequisites': 'executable("js")'
+    \ , 'prio': 1
+    \ }
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
 " we cannot set RUBYOPT on windows like that
