@@ -67,7 +67,7 @@ let tmp['php'] = {
 " HTML
 let tmp['html'] = {
     \   'applies' : '&ft == "html"'
-    \ , 'check' : function('syntastic_checkers#HTML')
+    \ , 'check' : funcref#Function('syntastic_checkers#HTML')
     \ , 'prerequisites': 'executable("tidy") && executable("grep")'
     \ }
 
@@ -101,7 +101,7 @@ let tmp['js_jshint'] = {
 " TODO test
 let tmp['js_jsl'] = {
     \   'applies' : '&ft == "js"'
-    \ , 'check' : function('syntastic_checkers#JS_JSL')
+    \ , 'check' : funcref#Function('syntastic_checkers#JS_JSL')
     \ , 'prerequisites': 'executable("jsl")'
     \ , 'prio': 1
     \ }
@@ -120,13 +120,13 @@ let tmp['ruby'] = {
 " TODO (test)
 let tmp['eruby'] = {
     \   'applies' : '&ft == "eruby"'
-    \ , 'check' : function('syntastic_checkers#Eruby')
+    \ , 'check' : funcref#Function('syntastic_checkers#Eruby')
     \ , 'prerequisites': 'executable("cat") && executabel("sed") && executable("ruby")'
     \ }
 
 let tmp['haml'] = {
     \   'applies' : '&ft == "haml"'
-    \ , 'check' : function('syntastic_checkers#Haml')
+    \ , 'check' : funcref#Function('syntastic_checkers#Haml')
     \ , 'prerequisites': 'executable("haml")'
     \ }
 
@@ -134,7 +134,7 @@ let tmp['haml'] = {
 " TODO (test). Probably this can be done like HAML
 let tmp['sass'] = {
     \   'applies' : '&ft == "sass"'
-    \ , 'check' : function('syntastic_checkers#Sass')
+    \ , 'check' : funcref#Function('syntastic_checkers#Sass')
     \ , 'prerequisites': 'executable("haml")'
     \ }
 
@@ -183,7 +183,7 @@ let tmp['cucumber'] = {
 let s:c['nvcc'] = get(s:c,'nvcc', '/usr/loca/cuda/bin/nvcc')
 let tmp['cudo'] = {
     \   'applies' : '&ft == "cuda"'
-    \ , 'check' : function('syntastic_checkers#CUDA')
+    \ , 'check' : funcref#Function('syntastic_checkers#CUDA')
     \ , 'prerequisites': 'executable(g:syntastic.nvcc)'
     \ }
 
@@ -238,7 +238,7 @@ let tmp['python'] = {
 
 let tmp['python_simple'] = {
       \  'applies' : '&ft == "python"'
-      \ , 'check' : function('syntastic_checkers#PythonSimple')
+      \ , 'check' : funcref#Function('syntastic_checkers#PythonSimple')
       \ , 'prerequisites': 'has("python")'
       \ }
 
@@ -345,7 +345,7 @@ fun! syntastic#Check()
   elseif type(d.check) == 2
 
     " (2) funcref must fill location /error list
-    call call(d.check, [list_type], d)
+    call funcref#Call(d.check, [list_type], d)
 
   endif
 
