@@ -5,9 +5,8 @@ If errors are found they are shown in the location or quickfix list. The
 location or quickfix window is opened and closed automatically.
 
 The original version can be found here: git://github.com/scrooloose/syntastic.git.
-Refactoring had to take place because
-- I felt there was too much duplicated code
-- it was not customizable enough.
+This branch / fork is maintained by <marco-oweberNOSPAM@gmx.de> Marc Weber.
+Notes about why this fork happened can be found at the end of the file.
 
 customizations:
 
@@ -32,4 +31,15 @@ Special notes:
   syntax checkers should never execute code. If you want to do that use
   vim-addon-actions!
 
-This branch / fork is maintained by <marco-oweberNOSPAM@gmx.de> Marc Weber.
+Refactoring had to take place because
+======================================
+- I felt there was too much duplicated code
+- it was not customizable enough.
+- some code was tight to specific system setups (eg the C implementation)
+- the tcl implementation run the interpreter.
+  If you want to do so use vim-addon-actions.
+  IMHO that's no go for a syntax checker plugin.
+
+I offered to join the original project - but got no reply to "should I join or
+fork?". Thus scrooloose knows about this fork and if he wants to merge I'll be
+ready. Until this happens this code will be available as syntastic2.
