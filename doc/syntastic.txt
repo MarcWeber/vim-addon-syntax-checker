@@ -12,7 +12,9 @@ customizations:
 
 Put into your .vimrc:
 
-  call syntastic#Setup()
+  runtime plugin/syntastic_setup.vim
+  " previously: call syntastic#Setup(), this is likely to be refactored
+
   " set this if you prefer activating the checkers manually
   " let g:syntastic['auto_setup'] = 0 
   let g:syntastic.file_types['new_type'] = Examples see plugin/syntastic.vim
