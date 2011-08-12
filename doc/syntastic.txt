@@ -4,9 +4,12 @@ This plugin checks syntax of your code (html, js, perl, ruby, ..) on buf write.
 If errors are found they are shown in the location or quickfix list. The
 location or quickfix window is opened and closed automatically.
 
-The original version can be found here: git://github.com/scrooloose/syntastic.git.
+The original version still being developed and maintained can be found here:
+git://github.com/scrooloose/syntastic.git
+
 This branch / fork is maintained by <marco-oweberNOSPAM@gmx.de> Marc Weber.
 Notes about why this fork happened can be found at the end of the file.
+Try both, use what fits your style.
 
 customizations:
 
@@ -35,7 +38,7 @@ Special notes:
 
 Refactoring had to take place because
 ======================================
-- I felt there was too much duplicated code
+- I felt there was too much duplicated code (I always feel strongly about this)
 - it was not customizable enough.
 - some code was tight to specific system setups (eg the C implementation)
 - the tcl implementation run the interpreter.
@@ -45,3 +48,4 @@ Refactoring had to take place because
 I offered to join the original project - but got no reply to "should I join or
 fork?". Thus scrooloose knows about this fork and if he wants to merge I'll be
 ready. Until this happens this code will be available as syntastic2.
+It looks like we have different styles / goals.
