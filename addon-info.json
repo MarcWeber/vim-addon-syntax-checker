@@ -6,7 +6,7 @@
   "repository" : {"type": "git", "url": "git://github.com/MarcWeber/Syntastic.git"},
   "dependencies" : {
     "vim-addon-mw-utils": {},
-    "tlib": {},
+    "tlib": {}
   },
   "description" : "syntax checker for perl, ruby, sh, python, ..."
 }
