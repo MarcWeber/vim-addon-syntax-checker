@@ -254,7 +254,7 @@ let tmp['python_simple'] = {
 " by  Martin Grenfell <martin.grenfell at gmail dot com>
 "TODO (test)
 let tmp['latex'] = {
-    \   'applies' : '&ft == "latex"'
+    \   'applies' : '&ft == "tex"'
     \ , 'check' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
     \ , 'prerequisites': 'executable("lacheck")'
     \ }
