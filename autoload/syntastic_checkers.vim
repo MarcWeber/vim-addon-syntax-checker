@@ -88,6 +88,19 @@ fun! syntastic_checkers#HTML(list_type) dict abort
   call syntastic#CheckSimple('', '%W%f:%l:%c:Warning: %m', a:list_type)
 endfun
 
+fun! syntastic_checkers#LATEX(list_type) dict abort
+  let cmd = 'lacheck '.shellescape(expand('%'))." 2>&1"
+
+  let list = []
+  let r = get(self, "ignore_regex", "")
+  for l in split(system(cmd),"\n")
+    if r != "" && l =~ r | continue | endif
+    call add(list,  substitute(l, '^\line \(\d\+\) column \(\d\+\) - \(.*\)', expand('%') . ':\1:\2:\3',''))
+  endfor
+  call writefile(list, s:c.tmpfile)
+  call syntastic#CheckSimple('', '%-G** %f:,%E"%f"\, line %l: %m', a:list_type)
+endfun
+
 fun! syntastic_checkers#JS_JSL(list_type)
   throw "TODO"
 "    'efm' : '%W%f(%l): lint warning: %m,%-Z%p^,%W%f(%l): warning: %m,%-Z%p^,%E%f(%l): SyntaxError: %m,%-Z%p^,%-G'

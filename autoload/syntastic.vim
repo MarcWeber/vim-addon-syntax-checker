@@ -253,11 +253,16 @@ let tmp['python_simple'] = {
 
 " by  Martin Grenfell <martin.grenfell at gmail dot com>
 "TODO (test)
+" , 'check' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
+" the  syntastic_checkers#LATEX let's you drop lines you don't care about
+" easily by setting the 'ignore_regex' key
 let tmp['latex'] = {
-    \   'applies' : '&ft == "tex"'
-    \ , 'check' : {'cmd': 'lacheck %', 'efm':  '%-G** %f:,%E"%f"\, line %l: %m' }
+    \   'applies' : '&ft == "plaintex"'
+    \ , 'check' : funcref#Function('syntastic_checkers#LATEX')
     \ , 'prerequisites': 'executable("lacheck")'
+    \ , 'ignore_regex': ''
     \ }
+
 
 " let tmp['xhttm'] =  join with html? TODO
 
@@ -351,7 +356,7 @@ fun! syntastic#Check()
     " (1) make like checker
     call syntastic#CheckSimple(substitute(d.check.cmd,'%',shellescape(expand('%')),'%'), d.check.efm, list_type)
 
-  elseif type(d.check) == 2
+  elseif type(d.check) == 2 || type(d.check) == 4 && has_key(d.check, 'faked_function_reference')
 
     " (2) funcref must fill location /error list
     call funcref#Call(d.check, [list_type], d)
