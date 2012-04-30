@@ -107,6 +107,13 @@ let tmp['js_jsl'] = {
     \ , 'prio': 1
     \ }
 
+" jslint: 
+" " good enough:
+" set efm=%+P%f,%mLine\ %l\\,\ Pos\ %c,%C%m
+" perfect:
+" set efm=%+P%f,%Z%sLine\ %l\\,\ Pos\ %c,%E%m
+
+
 " spidermonkey: {foo:3,} is fine according to this check, but IE yells about
 " this. So take care!
 let tmp['js'] = {
@@ -141,9 +148,10 @@ let tmp['haml'] = {
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
 " TODO (test). Probably this can be done like HAML
+" \ , 'check' : funcref#Function('syntastic_checkers#Sass')
 let tmp['sass'] = {
     \   'applies' : '&ft == "sass"'
-    \ , 'check' : funcref#Function('syntastic_checkers#Sass')
+    \ , 'check' : {'cmd' : 'sass %', 'efm': '%ESyntax %trror:%m,%C        on line %l of %f,%Z%m,%Wwarning on line %l:,%Z%m,Syntax %trror on line %l: %m'}
     \ , 'prerequisites': 'executable("haml")'
     \ }
 

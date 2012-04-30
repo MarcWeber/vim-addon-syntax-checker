@@ -1,0 +1,4 @@
+Details see doc/syntastic.txt
+
+This is a fork of Syntastic. However I prefer configurable easy to understand
+minimal code which does "syntax checking only". That's what this repo is about.
