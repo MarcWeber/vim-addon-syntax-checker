@@ -1,4 +1,3 @@
-
 "============================================================================
 "File:        syntastic.vim
 "Description: vim plugin for on the fly syntax checking
@@ -137,7 +136,7 @@ let tmp['ruby'] = {
 let tmp['eruby'] = {
     \   'applies' : '&ft == "eruby"'
     \ , 'check' : funcref#Function('syntastic_checkers#Eruby')
-    \ , 'prerequisites': 'executable("cat") && executabel("sed") && executable("ruby")'
+    \ , 'prerequisites': 'executable("cat") && executable("sed") && executable("ruby")'
     \ }
 
 let tmp['haml'] = {
