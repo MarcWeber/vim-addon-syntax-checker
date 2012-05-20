@@ -3,7 +3,7 @@
   "version" : "dev",
   "author" : "Martin Grenfell",
   "maintainer" : "Marc Weber <marco-oweber@gmx.de> (I mantain this fork only)",
-  "repository" : {"type": "git", "url": "git://github.com/MarcWeber/Syntastic.git"},
+  "repository" : {"type": "git", "url": "git://github.com/MarcWeber/vim-addon-syntax-checker.git"},
   "dependencies" : {
     "vim-addon-mw-utils": {},
     "tlib": {}
