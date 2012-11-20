@@ -377,7 +377,7 @@ fun! syntastic#Check()
   " colse open loc/ error list if there are errors / no errors
   exec list_type.(any ? 'open' : 'close')
 
-  exec 'set efm='.escape(e, ' \,|"')
+  exec 'set efm='.escape(e, "\t".' \,|"')
 endf
 
 fun! syntastic#SetupBufWriteChecker(setup_au)
