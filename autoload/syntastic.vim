@@ -116,8 +116,16 @@ let tmp['js_jsl'] = {
 " spidermonkey: {foo:3,} is fine according to this check, but IE yells about
 " this. So take care!
 let tmp['js'] = {
-    \   'applies' : '&ft == "javascript"'
+    \   'applies' : '&ft == "javascript" && expand("%:e") != "json"'
     \ , 'check' : {'cmd': 'js -C %', 'efm':  '%E%f:%l:\ %m,%-C:%l:\ %s,%Z%s:%p'}
+    \ , 'prerequisites': 'executable("js")'
+    \ , 'prio': 1
+    \ }
+
+
+let tmp['js_json'] = {
+    \   'applies' : '&ft == "javascript" && expand("%:e") == "json"'
+    \ , 'check' : {'cmd': '{ echo -n "var x= "; cat %; } | js 2>&1 | sed -e "s/^\\([0-9]\+\\):/"%":\\1:/"', 'efm':  '%f:%l:\ %m,%-C:%l:\ %s,%Z%s:%p'}
     \ , 'prerequisites': 'executable("js")'
     \ , 'prio': 1
     \ }
@@ -311,14 +319,14 @@ if s:c.auto_setup
   augroup end
 endif
 
-command! SyntasticDebug   echo "List of checkers which think that they are capabale of checking the current buffer:" |
+command! SyntaxCheckerDebug   echo "List of checkers which think that they are capabale of checking the current buffer:" |
                        \ echo "[] denotes none (epmty list)" |
                        \ echo "matching checkers: " . string(keys(syntastic#Options(0))) |
                        \ echo "matching checkers and prerequisites met: ".string(keys(syntastic#Options(1)))
 
-command! SyntasticDontCheckThisBuf silent! unlet b:syntastic_checker
+command! SyntaxCheckerDontCheckThisBuf silent! unlet b:syntastic_checker
 command! SetupBufWriteCheckerThisBuf call syntastic#SetupBufWriteChecker(1)
-command! CheckBuf call syntastic#Check()
+command! SyntaxCheckerCheckBuf call syntastic#Check()
 
 endf
 
@@ -361,7 +369,7 @@ fun! syntastic#Check()
   if type(d.check) == type({}) && has_key(d.check, 'cmd') && has_key(d.check, 'efm')
 
     " (1) make like checker
-    call syntastic#CheckSimple(substitute(d.check.cmd,'%',shellescape(expand('%')),'%'), d.check.efm, list_type)
+    call syntastic#CheckSimple(substitute(d.check.cmd,'%',shellescape(expand('%')),'g'), d.check.efm, list_type)
 
   elseif type(d.check) == 2 || type(d.check) == 4 && has_key(d.check, 'faked_function_reference')
 
