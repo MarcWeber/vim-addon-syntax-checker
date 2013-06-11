@@ -423,6 +423,11 @@ fun! syntastic#SetupBufWriteChecker(setup_au)
   let applicants = values(map(syntastic#Options(1), "{'k': v:key, 'v': v:val}"))
   call sort(applicants,  'syntastic#ComparePrio')
 
+  if len(applicants) == 0
+    let b:syntastic_checker = ""
+    return 0
+  endif
+
   if len(applicants) == 1
     let b:syntastic_checker == applicants[0].k
     return 1
