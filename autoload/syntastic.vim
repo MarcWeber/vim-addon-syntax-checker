@@ -137,14 +137,14 @@ let tmp['js_json_by_php'] = {
     \   'applies' : '&ft == "javascript" && expand("%:e") == "json"'
     \ , 'check' : {'cmd': 'php -f '.s:plugin_root.'/tools/json_checker.php  %', 'efm':  '%f:%l: %m'}
     \ , 'prerequisites': 'executable("php")'
-    \ , 'prio': 2
+    \ , 'prio': 1
     \ }
 
 let tmp['js_json_by_python'] = {
     \   'applies' : '&ft == "javascript" && expand("%:e") == "json"'
     \ , 'check' : {'cmd': 'php -f '.s:plugin_root.'/tools/json_checker.py  %', 'efm':  '%f:%l: %m'}
     \ , 'prerequisites': 'executable("python")'
-    \ , 'prio': 1
+    \ , 'prio': 2
     \ }
 
 " inaccurate: accepts ', but " must be used
@@ -152,7 +152,7 @@ let tmp['js_json'] = {
     \   'applies' : '&ft == "javascript" && expand("%:e") == "json"'
     \ , 'check' : {'cmd': '{ echo -n "var x= "; cat %; } | js 2>&1 | sed -e "s/^\\([0-9]\+\\):/"%":\\1:/"', 'efm':  '%f:%l:\ %m,%-C:%l:\ %s,%Z%s:%p'}
     \ , 'prerequisites': 'executable("js")'
-    \ , 'prio': 2
+    \ , 'prio': 3
     \ }
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
@@ -413,9 +413,24 @@ fun! syntastic#Check()
   exec 'set efm='.escape(e, "\t".' \,|"')
 endf
 
+
+fun! syntastic#ComparePrio(i1, i2)
+  return get(a:i1.v, 'prio', 1) - get(a:i2.v, 'prio', 1)
+endf
+
 fun! syntastic#SetupBufWriteChecker(setup_au)
   " try to find a matching checker
-  let b:syntastic_checker = tlib#input#List('s', 'Syntastic filetype checker:', keys(syntastic#Options(1)))
-  if b:syntastic_checker == "" | return 0 | endif
-  return 1
+  let applicants = values(map(syntastic#Options(1), "{'k': v:key, 'v': v:val}"))
+  call sort(applicants,  'syntastic#ComparePrio')
+
+  if len(applicants) == 1
+    let b:syntastic_checker == applicants[0].k
+    return 1
+  endif
+
+  let x = filter(copy(applicants), 'get(v:val.v, "prio") == '.string(get(applicants[0].v, 'prio')))
+  let keys = map(copy(x), 'v:val.k')
+  let b:syntastic_checker = tlib#input#List('s', 'Syntastic filetype checker:', keys)
+
+  return b:syntastic_checker == "" ? 0 : 1
 endf
