@@ -13,6 +13,7 @@
 "
 "============================================================================
 
+let s:plugin_root = expand('<sfile>:h:h')
 
 " put this all into a function you can call to force a setup
 " This may be required if you want to patch the dict
@@ -47,6 +48,7 @@ let s:c.tmpfile = tempname()
 
 " alias, don't repeat yourself
 let tmp = {}
+
 
 " dsecription:
 "  applies: does checker apply to current buffer? Vim expression returns bool
@@ -123,11 +125,34 @@ let tmp['js'] = {
     \ }
 
 
+let tmp['js'] = {
+    \   'applies' : '&ft == "javascript" && expand("%:e") != "json"'
+    \ , 'check' : {'cmd': 'js -C %', 'efm':  '%E%f:%l:\ %m,%-C:%l:\ %s,%Z%s:%p'}
+    \ , 'prerequisites': 'executable("js")'
+    \ , 'prio': 1
+    \ }
+
+
+let tmp['js_json_by_php'] = {
+    \   'applies' : '&ft == "javascript" && expand("%:e") == "json"'
+    \ , 'check' : {'cmd': 'php -f '.s:plugin_root.'/tools/json_checker.php  %', 'efm':  '%f:%l: %m'}
+    \ , 'prerequisites': 'executable("php")'
+    \ , 'prio': 2
+    \ }
+
+let tmp['js_json_by_python'] = {
+    \   'applies' : '&ft == "javascript" && expand("%:e") == "json"'
+    \ , 'check' : {'cmd': 'php -f '.s:plugin_root.'/tools/json_checker.py  %', 'efm':  '%f:%l: %m'}
+    \ , 'prerequisites': 'executable("python")'
+    \ , 'prio': 1
+    \ }
+
+" inaccurate: accepts ', but " must be used
 let tmp['js_json'] = {
     \   'applies' : '&ft == "javascript" && expand("%:e") == "json"'
     \ , 'check' : {'cmd': '{ echo -n "var x= "; cat %; } | js 2>&1 | sed -e "s/^\\([0-9]\+\\):/"%":\\1:/"', 'efm':  '%f:%l:\ %m,%-C:%l:\ %s,%Z%s:%p'}
     \ , 'prerequisites': 'executable("js")'
-    \ , 'prio': 1
+    \ , 'prio': 2
     \ }
 
 "by  Martin Grenfell <martin.grenfell at gmail dot com>
