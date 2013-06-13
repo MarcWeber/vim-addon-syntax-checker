@@ -429,7 +429,7 @@ fun! syntastic#SetupBufWriteChecker(setup_au)
   endif
 
   if len(applicants) == 1
-    let b:syntastic_checker == applicants[0].k
+    let b:syntastic_checker = applicants[0].k
     return 1
   endif
 
