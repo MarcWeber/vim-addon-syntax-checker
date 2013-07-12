@@ -377,7 +377,7 @@ fun! syntastic#CheckSimple(cmd, efm, list_type)
   " don't use make. scrolling lines are annoying!
   let g:syntastic.last_cmd = a:cmd
   if a:cmd != ""
-    call system(a:cmd.' &>'.s:c.tmpfile)
+    call system(a:cmd.' >'.s:c.tmpfile.' 2>&1')
   endif
   silent! exec a:list_type.'file '.s:c.tmpfile
 endf
