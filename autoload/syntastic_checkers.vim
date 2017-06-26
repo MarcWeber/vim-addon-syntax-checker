@@ -50,7 +50,7 @@ fun! syntastic_checkers#PythonSimple(list_type)
 
   call syntastic#CheckSimple(
     \ 'python '. shellescape(s:c.py_tmp)
-    \ , '%A  File "%f", line %l, %m'
+    \ , '%f:%l:%c:%m,%A  File "%f", line %l, %m'
     \ , a:list_type
     \ )
 endfun
